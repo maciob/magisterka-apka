@@ -22,25 +22,25 @@ pipeline
     }
     stages 
     {
-        // stage("Checkout") 
-        // {
-        //     steps 
-        //     {
-        //         script 
-        //         {
-        //             STAGE = 'Checkout'
-        //         }
-        //         deleteDir()
-        //         checkout scm
-        //         script 
-        //         {
-        //             withCredentials([string(credentialsId: '781630fc-34c9-4810-9226-e844ac17971c', variable: 'PASS')]) { 
-        //                 sh "git fetch https://Maciob:$PASS@github.com/Maciob/magisterka-apka --tags"
-        //             }
-        //             LOG = sh(returnStdout: true, script:"git log --oneline | head -1 | cut -d ')' -f2").trim()
-        //         }
-        //     }
-        // }
+        stage("Checkout") 
+        {
+            steps 
+            {
+                script 
+                {
+                    STAGE = 'Checkout'
+                }
+                deleteDir()
+                checkout scm
+                script 
+                {
+                    withCredentials([string(credentialsId: '781630fc-34c9-4810-9226-e844ac17971c', variable: 'PASS')]) { 
+                        sh "git fetch https://Maciob:$PASS@github.com/Maciob/magisterka-apka --tags"
+                    }
+                    LOG = sh(returnStdout: true, script:"git log --oneline | head -1 | cut -d ')' -f2").trim()
+                }
+            }
+        }
         stage('Build&Run') 
         {
             steps 
