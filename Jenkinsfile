@@ -138,14 +138,14 @@ pipeline
                     STAGE = 'Deploy to ECR'
                     // sh "aws eks --region eu-west-2 update-kubeconfig --name MBekas-portfolio-cluster"
                     sh "aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 644435390668.dkr.ecr.eu-west-2.amazonaws.com"
-                    sh "docker tag magisterka-apka_frontend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-front:${TAG_ECR}"
-                    sh "docker tag magisterka-apka_backend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-back:${TAG_ECR}"
+                    sh "docker tag magisterka_master_frontend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-front:${TAG_ECR}"
+                    sh "docker tag magisterka_master_backend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-back:${TAG_ECR}"
                     sh "docker push 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-front:${TAG_ECR}"
                     sh "docker push 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-back:${TAG_ECR}"
                     if(PREFIX_MAJOR > NEWEST_MAJOR || (PREFIX_MAJOR == NEWEST_MAJOR && PREFIX_MINOR >= NEWEST_MINOR))
                     {
-                        sh "docker tag magisterka-apka_frontend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-front:latest"
-                        sh "docker tag magisterka-apka_backend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-back:latest"
+                        sh "docker tag magisterka_master_frontend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-front:latest"
+                        sh "docker tag magisterka_master_backend:latest 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-back:latest"
                         sh "docker push 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-front:latest"
                         sh "docker push 644435390668.dkr.ecr.eu-west-2.amazonaws.com/magisterka-back:latest"
                         VER_CHECK = 'true'
