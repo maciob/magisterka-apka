@@ -196,10 +196,10 @@ pipeline
     {
         failure
         {
-            script
-            {
-                // updateGitlabCommitStatus name: "${STAGE}", state: 'failed'
-            }
+            // script
+            // {
+            //     // updateGitlabCommitStatus name: "${STAGE}", state: 'failed'
+            // }
             emailext recipientProviders: [culprits()], subject: 'Build failure', body: 'Sadge, your build failed at "${STAGE}" with ${BUILD_STATUS}.', attachLog: true
         }
         success
