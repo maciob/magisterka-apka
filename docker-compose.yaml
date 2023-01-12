@@ -1,0 +1,65 @@
+version: '3.7' 
+
+services: 
+  backend:
+    build: 
+      context: backend/Magisterka-backend
+      dockerfile: Dockerfile
+    container_name: backend
+    # environment:
+      # MONGO_USER: root
+      # MONGO_PASS: pass
+      # MONGO_SERVICE_NAME: mongo
+      # MONGO_PORT: 27017
+      # MONGO_COLLECTION: books
+      # MONGO_AUTHSOURCE: admin
+      # LOGGING_URL: logstash
+    ports:
+     - 8082:80
+     - 8083:443
+    networks:
+     - app
+    depends_on:
+      - database
+
+  database:
+    container_name: mysql
+    image: mysql:8.0.31
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    ports:
+    - 27017:27017
+    volumes:
+    - ./scripts:/docker-entrypoint-initdb.d
+    - database:/var/lib/mysql
+    networks:
+    - app
+
+
+  nginx:
+    # image: nginx
+    build: 
+      context: frontend/magisterka-frontend
+      dockerfile: Dockerfile
+    container_name: nginx
+    environment:
+      ADDRESS: asdasd
+      BACKEND_SERVICE: backend
+      NGINX_PORT: 80
+    ports:
+     - 8081:80
+    networks:
+     - app
+    # command: /bin/sh -c "export BACKEND_SERVICE && export ADDRESS && envsubst '$${ADDRESS} $${BACKEND_SERVICE}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
+    depends_on:
+      - backend
+
+volumes:
+  database:
+    name: database
+networks:
+  app:
+    name: app
+    external: true
