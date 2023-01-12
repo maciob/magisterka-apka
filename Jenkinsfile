@@ -30,6 +30,8 @@ pipeline
                 {
                     STAGE = 'Checkout'
                 }
+                deleteDir()
+                checkout scm
                 script 
                 {
                     withCredentials([gitUsernamePassword(credentialsId: '781630fc-34c9-4810-9226-e844ac17971c')]) { 
