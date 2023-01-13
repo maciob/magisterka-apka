@@ -34,7 +34,7 @@ pipeline
                 checkout scm
                 script 
                 {
-                    withCredentials([gitUsernamePassword(credentialsId: '781630fc-34c9-4810-9226-e844ac17971c'), gitToolName: 'Default')]) { 
+                    withCredentials([gitUsernamePassword(credentialsId: '781630fc-34c9-4810-9226-e844ac17971c', gitToolName: 'Default')]) { 
                         sh "git fetch https://github.com/Maciob/magisterka-apka --tags"
                     }
                     LOG = sh(returnStdout: true, script:"git log --oneline | head -1 | cut -d ')' -f2").trim()
@@ -166,7 +166,7 @@ pipeline
                     STAGE = 'GIT TAG'
                     sh 'git clean -f -x'
                     sh "git tag ${TAG_testing}"
-                    withCredentials([gitUsernamePassword(credentialsId: '781630fc-34c9-4810-9226-e844ac17971c'), gitToolName: 'Default')]) { 
+                    withCredentials([gitUsernamePassword(credentialsId: '781630fc-34c9-4810-9226-e844ac17971c', gitToolName: 'Default')]) { 
                         sh "git push https://github.com/Maciob/magisterka-apka --tags"
                     }
                 }
