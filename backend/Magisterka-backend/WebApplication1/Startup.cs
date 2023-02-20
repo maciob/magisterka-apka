@@ -10,7 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using MySqlConnector;
+using Microsoft.EntityFrameworkCore;
+using WebApplication1.Models;
 namespace WebApplication1
 {
     public class Startup
@@ -25,6 +27,8 @@ namespace WebApplication1
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<UserContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
+
             services.AddControllers();
         }
 
