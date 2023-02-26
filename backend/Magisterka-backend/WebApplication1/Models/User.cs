@@ -7,14 +7,14 @@ namespace WebApplication1.Models
     public class User
     {
         [Key]
-        public int ID_user { get; set; }
+        public System.Guid ID_user { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(20)")]
+        [Column(TypeName = "nvarchar(50)")]
         public string Login { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(30)")]
+        [Column(TypeName = "nvarchar(50)")]
         public string Password { get; set; }
 
         [Required]
@@ -22,18 +22,17 @@ namespace WebApplication1.Models
         public bool TwoFA { get; set; }
 
         [Column(TypeName = "bit")]
-        public bool? TypeTwoFA { get; set; }
+        public bool? Type_of_2FA { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(100)")]
-        public string Email { get; set; }
+        [Column(TypeName = "nvarchar(50)")]
+        public string E_mail { get; set; }
 
-        
-        [Column(TypeName = "nvarchar(30)")]
-        public string? TwoFASecret { get; set; }
+        [Column(TypeName = "nvarchar(50)")]
+        public int? TwoFA_code { get; set; }
 
+        [Required]
         [Column(TypeName = "bit")]
-        [Required]
         public bool Activated { get; set; }
 
     }

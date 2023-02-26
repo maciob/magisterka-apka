@@ -8,6 +8,6 @@ namespace WebApplication1.Models
         {
         }
 
-        public DbSet<User> Users { get; set; }
+        public DbSet<User> User_data { get; set; }
     }
 }

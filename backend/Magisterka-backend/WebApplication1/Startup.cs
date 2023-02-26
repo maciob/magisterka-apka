@@ -28,6 +28,9 @@ namespace WebApplication1
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<UserContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
+            services.AddDbContext<SessionContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
+            services.AddDbContext<WebsiteContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
+            services.AddDbContext<UserSessionContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
 
             services.AddControllers();
         }
