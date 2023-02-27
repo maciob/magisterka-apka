@@ -16,16 +16,18 @@ namespace WebApplication1.Controllers
         private readonly UserContext userContext;
         private readonly SessionContext sessionContext;
         private readonly UserSessionContext userSessionContext;
+        private readonly WebsiteContext websiteContext;
 
-        public UserController(UserContext context,SessionContext context2,UserSessionContext context3)
+        public UserController(UserContext context,SessionContext context2,UserSessionContext context3,WebsiteContext context4)
         {
             userContext = context;
             sessionContext = context2;
             userSessionContext = context3;
+            websiteContext = context4;
         }
 
         // curl -v -X POST -H "Content-Type: application/json" -d "{\'Username\':\'testuser\',\'Password\':\'testpass\',\'Email\':\'teste@xample.com\',\'TwoFA\':\'TRUE\',\'TwoFAtype\':\'TRUE\'}" https://localhost:5001/api/User/register
-        [HttpPost("register")]
+        [HttpPost("register/{username}/{password}/{email}/{twoFA}/{twoFAtype}")]
         public async Task<ActionResult<User>> Register(string username, string password, string email, bool twoFA,bool? twoFAtype)
         {
             //need to check if such a user exists
@@ -33,11 +35,11 @@ namespace WebApplication1.Controllers
             var user = new User
             {
                 ID_user = Guid.NewGuid(),
-                Login = "asd",
-                Password = "asd",
-                TwoFA = true,
-                Type_of_2FA = true,
-                E_mail = "asd",
+                Login = username,
+                Password = password,
+                TwoFA = twoFA,
+                Type_of_2FA = twoFAtype,
+                E_mail = email,
                 TwoFA_code = 1,
                 Activated = false
             };
@@ -113,7 +115,7 @@ namespace WebApplication1.Controllers
         }
 
         //curl -v -X POST -H "Content-Type: application/json" -d "{\'Username\':\'testuser\',\'Password\':\'testpass\'}" https://localhost:5001/api/User/login
-        [HttpPost("login/{username}/{password}")]
+        [HttpPost("login")]
         public async Task<ActionResult<User>> Login(string username, string password)
         {
             try
@@ -181,16 +183,41 @@ namespace WebApplication1.Controllers
                     return NotFound("session/user");
                 }
 
-                var user = await userContext.User_data.FindAsync(userSession.ID_user);
+                var user = await userContext.User_data.FirstOrDefaultAsync(us => us.ID_user == userSession.ID_user);
                 if (user == null)
                 {
                     return NotFound("Empty");
                 }
 
+                var websites = await websiteContext.Website.Where(w => w.ID_user == user.ID_user).ToListAsync();
+                if (websites != null)
+                {
+                    foreach (var website in websites) 
+                    {
+                        websiteContext.Website.Remove(website);
+                    }
+                }
+
+                // var Sessions = await sessionContext.Session.Where()
+
+                var userSessions = await userSessionContext.User_session.Where(us => us.ID_user == userSession.ID_user).ToListAsync();
+                if (userSessions != null)
+                {
+                    foreach (var entry in userSessions)
+                    {
+                        var session_entry = await sessionContext.Session.FirstOrDefaultAsync(s => s.Session_ID == userSession.Session_ID);
+                        userSessionContext.User_session.Remove(entry);
+                        sessionContext.Session.Remove(session_entry);
+                    }
+                }
                 userContext.User_data.Remove(user);
+
+                await websiteContext.SaveChangesAsync();
+                await userSessionContext.SaveChangesAsync();
+                await sessionContext.SaveChangesAsync();
                 await userContext.SaveChangesAsync();
 
-                return Ok(user);
+                return Ok();
 
             }
             catch (Exception ex)
@@ -207,10 +234,7 @@ namespace WebApplication1.Controllers
             return Ok();
         }
 
-        //Delete bo tego jeszcze brakuje
-
-        //Edit bo tego jeszcze brakuje
-
         //OTP API z typem
+
     }
 }

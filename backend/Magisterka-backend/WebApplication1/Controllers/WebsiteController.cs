@@ -180,7 +180,7 @@ namespace WebApplication1.Controllers
 
                 website.Login = login;
                 website.Password = password;
-                website.website_name = website.website_name;
+                website.website_name = website_name;
                 website.website_adress = website_adress;
                 website.Data = DateTime.Now;
 
