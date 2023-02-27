@@ -14,13 +14,15 @@ services:
       # MONGO_COLLECTION: books
       # MONGO_AUTHSOURCE: admin
       # LOGGING_URL: logstash
-    ports:
-     - 5000:80
-     - 5001:443
+    # ports:
+    #  - 5000:5000
+    #  - 5001:5001
     networks:
      - app
     depends_on:
       - database
+    networks:
+      - app
 
   database:
     container_name: mssql
@@ -55,7 +57,8 @@ services:
       BACKEND_SERVICE: backend
       PORT: 443
     ports:
-     - 8081:80
+     - 80:80
+     - 443:443
     networks:
      - app
     command: /bin/sh -c "export BACKEND_SERVICE && export ADDRESS && export PORT && envsubst '$${ADDRESS} $${BACKEND_SERVICE} $${PORT}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
