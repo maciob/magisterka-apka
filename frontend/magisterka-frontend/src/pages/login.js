@@ -9,7 +9,7 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/User/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
