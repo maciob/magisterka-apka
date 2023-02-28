@@ -1,0 +1,63 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+  }
+  
+  /* login form styles */
+  .form {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 5%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .form__input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+  }
+  
+  .form__label {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .form__input {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  
+  .form__error {
+    color: red;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  
+  .form__button {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  
+  .form__success {
+    color: green;
+    font-size: 24px;
+    margin-top: 16px;
+  }
+  
+  .react-switch {
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+  
