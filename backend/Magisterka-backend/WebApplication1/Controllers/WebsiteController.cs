@@ -25,9 +25,9 @@ namespace WebApplication1.Controllers
             websiteContext = context4;
         }
 
-        // curl -v -X GET https://localhost:5001/api/Website/list/71443B16-D421-46D4-974C-16242C23B948 -H "Content-Length: 0"
-        [HttpGet("list/{sessionID}")]
-        public async Task<ActionResult<Website>> List(string sessionID)
+        // curl -v -X GET http://backend:80/api/Website/list?sessionID=313efe30-7f4a-4d5f-87b1-1e38ed8a8531
+        [HttpGet("list")]
+        public async Task<ActionResult<Website>> List([FromQuery]string sessionID)
         {
             try
             {
