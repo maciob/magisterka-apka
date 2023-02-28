@@ -116,11 +116,11 @@ namespace WebApplication1.Controllers
 
         //curl -v -X POST -H "Content-Type: application/json" -d "{\'Username\':\'testuser\',\'Password\':\'testpass\'}" https://localhost:5001/api/User/login
         [HttpPost("login")]
-        public async Task<ActionResult<User>> Login(string username, string password)
+        public async Task<ActionResult<User>> Login([FromBody]LoginModel model)
         {
             try
             {
-                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.Login == username && u.Password == password);
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.Login == model.username && u.Password == model.password);
                 if (user == null)
                 {
                     return NotFound();
@@ -158,7 +158,6 @@ namespace WebApplication1.Controllers
             {
                 return StatusCode(500, $"Error: {ex.Message}");
             }
-
         }
 
         [HttpDelete("delete/{sessionID}")]
