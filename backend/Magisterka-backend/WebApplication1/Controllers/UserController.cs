@@ -145,14 +145,16 @@ namespace WebApplication1.Controllers
                 await sessionContext.SaveChangesAsync();
                 await userSessionContext.SaveChangesAsync();
 
-                if (user.TwoFA == true) 
+                if (user.TwoFA == true)
                 {
-                    var data = new { sessionID = session.Session_ID, otp = true, type = user.Type_of_2FA };
+                    var data = new { sessionID = session.Session_ID, hash = "asd", otp = true, type = user.Type_of_2FA };
                     return StatusCode(200, data);
                 }
-                
-                return Ok(session.Session_ID);
-
+                else 
+                {
+                    var data = new { sessionID = session.Session_ID, hash = "asd", otp = false };
+                    return StatusCode(200, data);
+                }
             }
             catch (Exception ex)
             {

@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import Navbar from '../components/upperbar';
 import '../css/login.css'
 import LowerBar from '../components/lowerbar';
+import {useNavigate} from 'react-router-dom';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [session, setSession] = useState('');
+  const [sessionID, setSession] = useState('');
   const [hash, setHash] = useState('');
 
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,10 +25,11 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
       if (response.ok) {
-        const { session, hash } = await response.json();
+        const { sessionID, hash } = await response.json();
         setHash(hash);
-        setSession(session);  
+        setSession(sessionID);  
         setSuccess(true);
+        navigate('/home', { state: { sessionID, hash } });
       } else {
         setError('Invalid username or password');
       }
