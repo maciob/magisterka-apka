@@ -25,13 +25,13 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
       if (response.ok) {
-        const { sessionID, hash } = await response.json();
+        const { sessionID, hash, otp, type } = await response.json();
         setHash(hash);
         setSession(sessionID);  
         setSuccess(true);
         console.error(sessionID);
         console.error(hash);
-        navigate('/home', { state: { sessionID, hash } });
+        navigate('/home', { sessionID, hash });
       } else {
         setError('Invalid username or password');
       }
