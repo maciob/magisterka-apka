@@ -27,10 +27,14 @@ namespace WebApplication1.Controllers
 
         // curl -v -X GET http://backend:80/api/Website/list?sessionID=313efe30-7f4a-4d5f-87b1-1e38ed8a8531
         [HttpGet("list")]
-        public async Task<ActionResult<Website>> List([FromQuery]string sessionID)
+        public async Task<ActionResult<Website>> List([FromQuery]string sessionID,[FromQuery]string hash)
         {
             try
             {
+                if (sessionID == null || hash == null) 
+                {
+                    return BadRequest("Error.");
+                }
                 var session = await sessionContext.Session.FindAsync(new Guid(sessionID));
                 if (session == null)
                 {

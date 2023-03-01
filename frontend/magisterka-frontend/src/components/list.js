@@ -4,7 +4,7 @@ function MyList() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetch('/api/my-endpoint')
+    fetch('/api/Website/list?sessionID='+sessionID+'&hash='+hash)
       .then(response => response.json())
       .then(data => setItems(data))
       .catch(error => console.log(error));
@@ -15,7 +15,7 @@ function MyList() {
       <h1>My List</h1>
       <ul>
         {items.map(item => (
-          <li key={item.id}>{item.name}</li>
+          <li key={item.ID_website}>{item.website_name}{item.website_adress}{item.Login}{item.Password}</li>
         ))}
       </ul>
     </div>
