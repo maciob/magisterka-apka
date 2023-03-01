@@ -4,10 +4,12 @@ import LowerBar from '../components/lowerbar';
 
 import MyList from '../components/list';
 
-function Home() {
+function Home(props) {
+  const { sessionID, hash } = props;
+
   return (
     <div>
-      <MyList />
+      <MyList sessionID={sessionID} hash={hash}/>
       <LowerBar />
     </div>
   );

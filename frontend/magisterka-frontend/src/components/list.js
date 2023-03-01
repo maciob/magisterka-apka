@@ -5,7 +5,7 @@ function MyList(props) {
   const { sessionID, hash } = props;
 
   useEffect(() => {
-    fetch('/api/Website/list?sessionID='+props.sessionID+'&hash='+props.hash)
+    fetch('/api/Website/list?sessionID='+sessionID+'&hash='+hash)
       .then(response => response.json())
       .then(data => setItems(data))
       .catch(error => console.log(error));

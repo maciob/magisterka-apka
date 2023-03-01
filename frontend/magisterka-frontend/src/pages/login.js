@@ -29,6 +29,8 @@ function LoginPage() {
         setHash(hash);
         setSession(sessionID);  
         setSuccess(true);
+        console.error(sessionID);
+        console.error(hash);
         navigate('/home', { state: { sessionID, hash } });
       } else {
         setError('Invalid username or password');
