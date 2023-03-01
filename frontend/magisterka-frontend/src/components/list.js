@@ -9,7 +9,7 @@ function MyList(props) {
       .then(response => response.json())
       .then(data => setItems(data))
       .catch(error => console.log(error));
-  }, []);
+  }, [sessionID, hash]);
 
   return (
     <div className="my-list">
