@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import Navbar from '../components/upperbar';
 import '../css/login.css'
+import LowerBar from '../components/lowerbar';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [session, setSession] = useState('');
+  const [hash, setHash] = useState('');
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,6 +23,9 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
       if (response.ok) {
+        const { session, hash } = await response.json();
+        setHash(hash);
+        setSession(session);  
         setSuccess(true);
       } else {
         setError('Invalid username or password');
@@ -62,6 +69,7 @@ function LoginPage() {
           <button type="submit" className="form__button">Login</button>
         </form>
       </div>
+      <LowerBar />
     </div>
   );
 }

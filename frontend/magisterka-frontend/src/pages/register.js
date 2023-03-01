@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '../components/upperbar';
 import '../css/login.css'
 import Switch from "react-switch";
+import LowerBar from '../components/lowerbar';
 
 function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -121,6 +122,7 @@ function RegisterPage() {
             <button type="submit" className="form__button">Register</button>
         </form>
       </div>
+      <LowerBar />
     </div>
   );
 }
