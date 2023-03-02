@@ -4,12 +4,12 @@ import LowerBar from '../components/lowerbar';
 
 import MyList from '../components/list';
 
-function Home(props) {
-  const sessionID = props.location.state.sessionID;
-  const hash = props.location.state.hash;
+function Home() {
+  const sessionID = sessionStorage.getItem('sessionID');
+  const hash = sessionStorage.getItem('hash');
   // const { sessionID, hash } = props;
-  console.error(sessionID);
-  console.error(hash);
+  console.log(sessionID);
+  console.log(hash);
 
   return (
     

@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-function MyList(props) {
+function MyList() {
   const [items, setItems] = useState([]);
-  const { sessionID, hash } = props;
 
   useEffect(() => {
-    fetch('/api/Website/list?sessionID='+sessionID+'&hash='+hash)
+    fetch('/api/Website/list?sessionID='+sessionStorage.getItem('sessionID')+'&hash='+sessionStorage.getItem('hash'))
       .then(response => response.json())
       .then(data => setItems(data))
       .catch(error => console.log(error));
-  }, [sessionID, hash]);
+  });
 
   return (
     <div className="my-list">

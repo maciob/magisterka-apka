@@ -39,6 +39,11 @@ function LoginPage() {
     });
     setSession(value.sessionID)
     setHash(value.hash)
+    console.log('sessionID:', sessionID);
+    console.log('hash:', hash);
+    sessionStorage.setItem('sessionID', JSON.stringify(value.sessionID));
+    sessionStorage.setItem('hash', JSON.stringify(value.hash));
+
     // try {
     //   const response = await fetch('/api/User/login', {
     //     method: 'POST',
@@ -55,7 +60,7 @@ function LoginPage() {
     //     setSuccess(true);
     //     console.error(sessionID);
     //     console.error(hash);
-    navigate('/home', { state: {sessionID, hash} });
+    navigate('/home');
     //   } else {
     //     setHash("hash");
     //     setSession("sessionID");
@@ -103,7 +108,7 @@ function LoginPage() {
           <button type="submit" className="form__button">Login</button>
         </form>
       </div>
-      <LowerBar />
+      <LowerBar />a
     </div>
   );
 }
