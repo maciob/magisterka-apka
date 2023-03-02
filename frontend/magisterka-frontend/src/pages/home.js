@@ -14,7 +14,7 @@ function Home() {
   return (
     
     <div>
-      <MyList sessionID={sessionID} hash={hash}/>
+      <MyList />
       <LowerBar />
     </div>
   );
