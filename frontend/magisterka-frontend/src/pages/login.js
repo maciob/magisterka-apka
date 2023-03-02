@@ -9,9 +9,6 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [sessionID, setSession] = useState('');
-  const [hash, setHash] = useState('');
-
   const navigate = useNavigate();
 
   async function loginUser(credentials) {
@@ -37,12 +34,8 @@ function LoginPage() {
       username,
       password
     });
-    setSession(value.sessionID)
-    setHash(value.hash)
-    console.log('sessionID:', sessionID);
-    console.log('hash:', hash);
-    sessionStorage.setItem('sessionID', JSON.stringify(value.sessionID));
-    sessionStorage.setItem('hash', JSON.stringify(value.hash));
+    sessionStorage.setItem('sessionID', value.sessionID);
+    sessionStorage.setItem('hash', value.hash);
 
     // try {
     //   const response = await fetch('/api/User/login', {

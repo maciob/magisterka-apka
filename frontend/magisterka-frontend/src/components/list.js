@@ -15,7 +15,7 @@ function MyList() {
       <h1>My List</h1>
       <ul>
         {items.map(item => (
-          <li key={item.ID_website}>{item.website_name}{item.website_adress}{item.Login}{item.Password}</li>
+          <li key={item.ID_website}>{item.website_name} {item.website_adress} {item.login} {item.password}</li>
         ))}
       </ul>
     </div>
