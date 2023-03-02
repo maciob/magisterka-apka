@@ -14,31 +14,60 @@ function LoginPage() {
 
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  async function loginUser(credentials) {
     try {
-      const response = await fetch('/api/User/login', {
+      return await fetch('/api/User/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password }),
-      });
-      if (response.ok) {
-        const { sessionID, hash, otp, type } = await response.json();
-        setHash(hash);
-        setSession(sessionID);  
-        setSuccess(true);
-        console.error(sessionID);
-        console.error(hash);
-        navigate('/home', { sessionID, hash });
-      } else {
-        setError('Invalid username or password');
-      }
-    } catch (error) {
+        body: JSON.stringify(credentials)
+      }).then(data => data.json())
+    }
+    catch (error)
+    {
       console.error(error);
       setError('An error occurred while trying to login');
     }
+  }
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const value = await loginUser({
+      username,
+      password
+    });
+    setSession(value.sessionID)
+    setHash(value.hash)
+    // try {
+    //   const response = await fetch('/api/User/login', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({ username, password }),
+    //   });
+
+    //   if (response.ok) {
+    //     const {sessionID, hash} = await response.json();
+    //     setHash("hash");
+    //     setSession("sessionID");  
+    //     setSuccess(true);
+    //     console.error(sessionID);
+    //     console.error(hash);
+    navigate('/home', { state: {sessionID, hash} });
+    //   } else {
+    //     setHash("hash");
+    //     setSession("sessionID");
+    //     console.log('sessionID:', sessionID);
+    //     console.log('hash:', hash);
+    //     navigate('/home', { state: { sessionID, hash} });
+    //     setError('Invalid username or password');
+    //   }
+    // } catch (error) {
+    //   console.error(error);
+    //   setError('An error occurred while trying to login');
+    // }
   };
 
   if (success) {

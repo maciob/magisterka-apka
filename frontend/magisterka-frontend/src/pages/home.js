@@ -5,7 +5,11 @@ import LowerBar from '../components/lowerbar';
 import MyList from '../components/list';
 
 function Home(props) {
-  const { sessionID, hash } = props.params;
+  const sessionID = props.location.state.sessionID;
+  const hash = props.location.state.hash;
+  // const { sessionID, hash } = props;
+  console.error(sessionID);
+  console.error(hash);
 
   return (
     

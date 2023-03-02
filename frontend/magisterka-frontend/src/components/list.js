@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 function MyList(props) {
   const [items, setItems] = useState([]);
-  const { sessionID, hash } = props.params;
+  const { sessionID, hash } = props;
 
   useEffect(() => {
     fetch('/api/Website/list?sessionID='+sessionID+'&hash='+hash)
