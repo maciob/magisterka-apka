@@ -2,15 +2,7 @@ import React, { useState, useEffect } from 'react';
 import "../css/list.css"
 
 function MyList() {
-
-  const config = {
-    bucketName: 'icons-magisterka',
-    dirName: 'brands', 
-    region: 'us-east-1',
-    accessKeyId: 'your-access-key',
-    secretAccessKey: 'your-secret-access-key',
-  };
-  
+ 
   const [items, setItems] = useState([]);
 
   useEffect(() => {
