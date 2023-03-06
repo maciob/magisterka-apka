@@ -1,5 +1,7 @@
-.my-list {
+  .my-list {
     padding: 20px;
+    height: 100%; /* Set a fixed height for the container */
+    overflow-y: scroll; /* Add overflow-y: scroll; to make the list scrollable */
   }
   
   .my-list h1 {
@@ -25,3 +27,53 @@
     border-bottom: none;
   }
   
+
+  .table-container {
+    height: calc(100vh - 150px); /* Set a fixed height for the container */
+    overflow: auto; /* Add overflow: auto; to make the container scrollable */
+  }
+  
+  .table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  .td {
+    border: 0px solid #ddd;
+    padding: 0px;
+  }
+  
+  .td:first-child {
+    width: 10px;
+    text-align: center;
+  }
+  
+  .td:first-child img {
+    display: block;
+    margin: 0 auto;
+  }
+  
+  .td:last-child {
+    text-align: left;
+  }
+  
+  .button {
+    background-color: #fff;
+    border: none;
+    color: #333;
+    cursor: pointer;
+    padding: 12px;
+    height: 100%;
+    width: 100%;
+    text-align: left;
+    font-size: 18px;
+  }
+  
+  .button:hover {
+    background-color: #333;
+    color: #fff;
+  }
+  
+  .button:focus {
+    outline: none;
+  }

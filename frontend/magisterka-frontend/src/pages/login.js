@@ -101,7 +101,7 @@ function LoginPage() {
           <button type="submit" className="form__button">Login</button>
         </form>
       </div>
-      <LowerBar />a
+      <LowerBar />
     </div>
   );
 }
