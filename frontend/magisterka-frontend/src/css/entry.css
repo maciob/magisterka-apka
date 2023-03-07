@@ -1,0 +1,99 @@
+  
+  /* login form styles */
+  .form {
+    max-width: 600px;
+    display: flex;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: white;
+    flex-direction: column;
+    border-radius: 5%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .form__lowerside {
+    flex-basis: 40%;
+  }
+  
+  .form__upperside {
+    flex-basis: 60%;
+    flex-direction: column;
+    display: flex;
+
+    /* justify-content: space-between; */
+  }
+
+  .form__container {
+    border-radius: 10px;
+    flex-basis: 100%;
+    /* justify-content: space-between; */
+    flex-direction: row;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .form__rightside {
+    flex-basis: 33%;
+  }
+
+  .form__newline 
+  {
+    flex-direction: column;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form__input-group {
+    border-radius: 10px;
+    justify-content: space-between;
+    flex-direction: row;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .form__label {
+    flex-basis: 50%;
+    font-size: 22px;
+    margin-top: 8px;
+    margin-left: 40px;
+    /* margin-bottom: 8px; */
+  }
+  
+  .form__input {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  
+  .form__error {
+    color: red;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  
+  .form__button {
+    background-color: #333;
+    color: white;
+    border: none;
+    /* padding: 8px 8px; */
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    font-size: 22px;
+    margin-top: 2px;
+    margin-left: 10px;
+
+  }
+  
+  .form__success {
+    color: green;
+    font-size: 24px;
+    margin-top: 16px;
+  }
+  
+  .react-switch {
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+  

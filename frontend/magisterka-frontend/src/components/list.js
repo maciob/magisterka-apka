@@ -41,7 +41,13 @@ function MyList() {
 
   const handleClick = (id) => {
     console.log(`Button with ID ${id} clicked`);
-    // Do something when a button is clicked
+    sessionStorage.setItem('Entry', true);
+    sessionStorage.setItem('Account', false);
+    sessionStorage.setItem('PasswordGenerator', false);
+    sessionStorage.setItem('GeneratorSettings', false);
+    sessionStorage.setItem('AddNewAccount', false);
+    sessionStorage.setItem('EntryValue', id);
+    window.location.reload(false)
   };
 
   return (
