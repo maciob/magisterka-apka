@@ -36,36 +36,8 @@ function LoginPage() {
     });
     sessionStorage.setItem('sessionID', value.sessionID);
     sessionStorage.setItem('hash', value.hash);
-
-    // try {
-    //   const response = await fetch('/api/User/login', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ username, password }),
-    //   });
-
-    //   if (response.ok) {
-    //     const {sessionID, hash} = await response.json();
-    //     setHash("hash");
-    //     setSession("sessionID");  
-    //     setSuccess(true);
-    //     console.error(sessionID);
-    //     console.error(hash);
+    sessionStorage.setItem('sessionExpired', false);
     navigate('/home');
-    //   } else {
-    //     setHash("hash");
-    //     setSession("sessionID");
-    //     console.log('sessionID:', sessionID);
-    //     console.log('hash:', hash);
-    //     navigate('/home', { state: { sessionID, hash} });
-    //     setError('Invalid username or password');
-    //   }
-    // } catch (error) {
-    //   console.error(error);
-    //   setError('An error occurred while trying to login');
-    // }
   };
 
   if (success) {

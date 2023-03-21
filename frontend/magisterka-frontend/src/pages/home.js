@@ -1,50 +1,59 @@
 import React, { useState , useEffect } from 'react';
+import SessionExpired from '../components/sessionexpired';
 import Navbar from '../components/upperbar';
 import LowerBar from '../components/lowerbar';
 import MyList from '../components/list';
-import Menu from "../components/menu"
-import Entry from "../components/entry"
-import "../css/home.css"
+import Menu from "../components/menu";
+import Account from "../components/account";
+import Entry from "../components/entry";
+import NewEntry from "../components/newentry";
+import GeneratorSettings from '../components/generatorsettings';
+import "../css/home.css";
 function Home() {
-  const sessionID = sessionStorage.getItem('sessionID');
-  const hash = sessionStorage.getItem('hash');
-
-  // const { sessionID, hash } = props;
-  console.log(sessionID);
-  console.log(hash);
+  const [sessionExpired, setSessionExpired] = useState(sessionStorage.getItem('sessionExpired') === 'true');
 
   return (
-    <div display="flex">
-      <Navbar />
-      <div className="footer">
-        <LowerBar />
-      </div>
-      <div className="container">
-        <div className="menu">
-          <Menu />
+    <div>
+      {sessionExpired ? (
+        <div display="flex">
+          <Navbar />
+          <SessionExpired />
         </div>
-        <div className="list">
-          <MyList />
+      ) : (
+        <div display="flex">
+          <Navbar />
+          <div className="footer">
+            <LowerBar />
+          </div>
+          <div className="container">
+            <div className="menu">
+              <Menu />
+            </div>
+            <div className="list">
+              <MyList />
+            </div>
+            <div className="details">
+              { JSON.parse(sessionStorage.getItem('Entry')) && (
+                <Entry />
+              )}
+              { JSON.parse(sessionStorage.getItem('Account')) && (
+                <Account />
+              )}
+              { JSON.parse(sessionStorage.getItem('PasswordGenerator')) && (
+                <NewEntry />
+              )}
+              { JSON.parse(sessionStorage.getItem('GeneratorSettings')) && (
+                <GeneratorSettings />
+              )}
+              { JSON.parse(sessionStorage.getItem('AddNewAccount')) && (
+                <NewEntry />
+              )}
+            </div>
+          </div>
         </div>
-        <div className="details">
-          { JSON.parse(sessionStorage.getItem('Entry')) && (
-            <Entry />
-          )}
-          { JSON.parse(sessionStorage.getItem('Account')) && (
-            <text>Account</text>
-          )}
-          { JSON.parse(sessionStorage.getItem('PasswordGenerator')) && (
-            <text>PasswordGenerator</text>
-          )}
-          { JSON.parse(sessionStorage.getItem('GeneratorSettings')) && (
-            <text>GeneratorSettings</text>
-          )}
-          { JSON.parse(sessionStorage.getItem('AddNewAccount')) && (
-            <text>AddNewAccount</text>
-          )}
-        </div>
-      </div>
+        )}
     </div>
+
   );
 }
 

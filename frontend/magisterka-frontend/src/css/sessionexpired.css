@@ -1,0 +1,18 @@
+.sessionexpired__container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .sessionexpired__message {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+    background-color: #ff6347;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  }
+  

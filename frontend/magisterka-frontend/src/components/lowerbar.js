@@ -4,6 +4,7 @@ import '../css/lowerbar.css'
 
 function LowerBar() {
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [sessionID, setSessionID] = useState(sessionStorage.getItem('sessionID'));
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,25 +18,40 @@ function LowerBar() {
   }, []);
 
   useEffect(() => {
-    // Send POST request when timeLeft reaches 0
-    if (timeLeft === 0) {
-      fetch('/api/User/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message: 'Timer finished' })
-      })
-      .then(response => response.json())
-      .then(data => console.log(data))
-      .catch(error => console.log(error));
-      
-      // Reset timer to 5 minutes
-      setTimeLeft(300);
-      navigate('/home');
+    async function LogoutAndRedirect(data) {
+      if (timeLeft === 0) {
+        sessionStorage.setItem('Entry', false);
+        sessionStorage.setItem('Account', false);
+        sessionStorage.setItem('PasswordGenerator', false);
+        sessionStorage.setItem('GeneratorSettings', false);
+        sessionStorage.setItem('AddNewAccount', false);
+        try {
+          const value = await Logout({
+            sessionID
+          });
+          sessionStorage.setItem('sessionID','');
+          sessionStorage.setItem('sessionExpired', true);
+          setTimeLeft(300);
+          navigate('/login');
+        } catch (error) {
+          console.error(error);
+        }
+      }
     }
+    LogoutAndRedirect();
   }, [timeLeft]);
-
+  
+  async function Logout(data) {
+    try {
+        return await fetch('/api/User/logout?sessionID=' + data.sessionID, {
+            method: 'POST' }).then(data => data.json())
+    }
+    catch (error)
+    {
+        console.error(error);
+    }
+  }
+  
   return (
     <div className="lower-bar">
       <p>Time left: {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10 ? '0' : ''}{timeLeft % 60}</p>

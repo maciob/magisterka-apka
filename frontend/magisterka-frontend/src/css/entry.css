@@ -1,6 +1,6 @@
   
   /* login form styles */
-  .form {
+  .entry__form {
     max-width: 600px;
     display: flex;
     margin: 40px auto;
@@ -11,68 +11,78 @@
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
   }
   
-  .form__lowerside {
+  .entry__form__lowerside {
     flex-basis: 40%;
   }
   
-  .form__upperside {
-    flex-basis: 60%;
+  .entry__form__upperside {
+    flex-basis: 80%;
     flex-direction: column;
     display: flex;
 
     /* justify-content: space-between; */
   }
 
-  .form__container {
+  .entry__form__container {
     border-radius: 10px;
-    flex-basis: 100%;
-    /* justify-content: space-between; */
     flex-direction: row;
     margin-top: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 16px;    
   }
   
-  .form__rightside {
+  .entry__form__container__div 
+  {
     flex-basis: 33%;
   }
 
-  .form__newline 
-  {
-    flex-direction: column;
-    margin-top: 16px;
-    margin-bottom: 16px;
+  .entry__form__rightside {
+    margin-left: 80px;
+    vertical-align: middle;
+    text-align: center;
   }
 
-  .form__input-group {
-    border-radius: 10px;
-    justify-content: space-between;
+  .entry__form__input-group {
+    display: flex;
     flex-direction: row;
-    margin-top: 16px;
     margin-bottom: 16px;
+    margin-top: 16px;
+    height: 80px;
   }
-  
-  .form__label {
-    flex-basis: 50%;
+  .entry__form__input-group__child {
+    vertical-align: middle;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .entry__form__label {
+    margin-left: 20px;
     font-size: 22px;
-    margin-top: 8px;
-    margin-left: 40px;
-    /* margin-bottom: 8px; */
+    margin-top: 16px;
+    margin-bottom: 8px;
+    vertical-align: middle;
+
   }
   
-  .form__input {
+  .entry__form__input {
+    margin-left: 20px;
+    margin-top: 6px;
     padding: 8px 12px;
     border-radius: 4px;
     border: 1px solid #ccc;
-    font-size: 16px;
+    font-size: 22px;
+    height: 26px;
+    vertical-align: middle;
+    width: 250px;
+    
   }
   
-  .form__error {
+  .entry__form__error {
     color: red;
     margin-top: 8px;
     font-size: 14px;
   }
   
-  .form__button {
+  .entry__form__button {
     background-color: #333;
     color: white;
     border: none;
@@ -81,19 +91,63 @@
     font-size: 16px;
     cursor: pointer;
     font-size: 22px;
-    margin-top: 2px;
+    margin-top: 8px;
     margin-left: 10px;
 
   }
   
-  .form__success {
+  .entry__form__success {
     color: green;
     font-size: 24px;
     margin-top: 16px;
   }
   
-  .react-switch {
+  .entry__react-switch {
     vertical-align: middle;
     margin-left: 4px;
   }
-  
+
+#c1 {
+  width: 20%;
+}
+#c2 {
+  width: 33%;
+}
+#c3 {
+  width: 10%;
+  vertical-align: middle;
+}
+#c4 {
+  width: 80%;
+  vertical-align: middle;
+}
+
+.entry__button {
+  background-color: #333;
+  color: #fff;
+  font-size: 20px;
+  width: 100px;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.entry__button:hover {
+  background-color: #fff;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.entry__lowerside__div {
+  margin-left: 10px;
+  margin-bottom: 15px;
+}
+
+.entry__rightside__div {
+  margin-right: 10px;
+}

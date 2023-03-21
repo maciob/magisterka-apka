@@ -30,7 +30,7 @@ CREATE TABLE User_data
     Login VARCHAR(50) NOT NULL,
     Password VARCHAR(50) NOT NULL,
     TwoFA BIT NOT NULL,
-    Type_of_2FA BIT,
+    Type_of_2FA VARCHAR(50),
     E_mail VARCHAR(50) NOT NULL,
     TwoFA_code VARCHAR(50),
     Activated BIT NOT NULL
@@ -50,7 +50,7 @@ CREATE TABLE Website
     ID_website BIGINT PRIMARY KEY IDENTITY(1,1),
     ID_user UNIQUEIDENTIFIER NOT NULL REFERENCES User_data(ID_user),
     website_name VARCHAR(50) NOT NULL,
-    website_adress VARCHAR(255) NOT NULL,
+    website_adress VARCHAR(50) NOT NULL,
     Login VARCHAR(50) NOT NULL,
     Password VARCHAR(50) NOT NULL,
     Data DATETIME NOT NULL

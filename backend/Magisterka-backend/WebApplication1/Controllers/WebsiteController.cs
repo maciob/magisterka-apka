@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -6,9 +7,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.Models;
+using System.Text.Json;
+
 
 namespace WebApplication1.Controllers
 {
+    [EnableCors("CorsApi")]
     [ApiController]
     [Route("api/[controller]")]
     public class WebsiteController : ControllerBase
@@ -58,6 +62,13 @@ namespace WebApplication1.Controllers
                     return NotFound("Empty");
                 }
 
+                foreach (var website in websites) 
+                {
+                    website.ID_user = new Guid(sessionID);
+                    website.Login = "";
+                    website.Password = "";
+                }
+
                 return Ok(websites);
 
             }
@@ -69,8 +80,8 @@ namespace WebApplication1.Controllers
         }
 
         // curl -v -X GET https://localhost:5001/api/Website/entry/71443B16-D421-46D4-974C-16242C23B948/1 -H "Content-Length: 0"
-        [HttpGet("entry/{sessionID}/{websiteID}")]
-        public async Task<ActionResult<Website>> GetEntry(string sessionID, string websiteID)
+        [HttpGet("entry")]
+        public async Task<ActionResult<Website>> GetEntry([FromQuery] string sessionID, [FromQuery] string websiteID, [FromQuery] string hash)
         {
             try
             {
@@ -107,12 +118,12 @@ namespace WebApplication1.Controllers
 
         }
 
-        [HttpPost("entry/{sessionID}/{login}/{password}/{website_name}/{website_adress}")]
-        public async Task<ActionResult<Website>> AddEntry(string sessionID, string login, string password, string website_name, string website_adress)
+        [HttpPost("entry")]
+        public async Task<ActionResult<Website>> AddEntry([FromBody] AddEntryModel model)
         {
             try
             {
-                var session = await sessionContext.Session.FindAsync(new Guid(sessionID));
+                var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
                 if (session == null)
                 {
                     return NotFound("Your session is invalid.");
@@ -123,7 +134,7 @@ namespace WebApplication1.Controllers
                     return Unauthorized("Your session has expired.");
                 }
 
-                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(sessionID));
+                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(model.sessionID));
                 if (userSession == null)
                 {
                     return NotFound("session/user");
@@ -133,10 +144,10 @@ namespace WebApplication1.Controllers
                 var website = new Website
                 {
                     ID_user = userSession.ID_user,
-                    Login = login,
-                    Password = password,
-                    website_name = website_name,
-                    website_adress = website_adress,
+                    Login = model.login,
+                    Password = model.password,
+                    website_name = model.yourname,
+                    website_adress = model.url,
                     Data = DateTime.Now
                 };
 
@@ -144,7 +155,7 @@ namespace WebApplication1.Controllers
 
                 await websiteContext.SaveChangesAsync();
 
-                return Ok(website);
+                return Ok();
 
             }
             catch (Exception ex)
@@ -154,12 +165,12 @@ namespace WebApplication1.Controllers
 
         }
 
-        [HttpPut("entry/{sessionID}/{websiteID}/{login}/{password}/{website_name}/{website_adress}")]
-        public async Task<ActionResult<Website>> EditEntry(string sessionID, string websiteID, string login, string password, string website_name, string website_adress)
+        [HttpPut("entry")]
+        public async Task<ActionResult<Website>> EditEntry([FromBody] EditEntryModel model)
         {
             try
             {
-                var session = await sessionContext.Session.FindAsync(new Guid(sessionID));
+                var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
                 if (session == null)
                 {
                     return NotFound("Your session is invalid.");
@@ -170,27 +181,27 @@ namespace WebApplication1.Controllers
                     return Unauthorized("Your session has expired.");
                 }
 
-                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(sessionID));
+                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(model.sessionID));
                 if (userSession == null)
                 {
                     return NotFound("session/user");
                 }
 
-                var website = await websiteContext.Website.FirstOrDefaultAsync(w => w.ID_user == userSession.ID_user && w.ID_website == long.Parse(websiteID));
+                var website = await websiteContext.Website.FirstOrDefaultAsync(w => w.ID_user == userSession.ID_user && w.ID_website == long.Parse(model.websiteID));
                 if (website == null)
                 {
                     return NotFound("Empty");
                 }
 
-                website.Login = login;
-                website.Password = password;
-                website.website_name = website_name;
-                website.website_adress = website_adress;
+                website.Login = model.login;
+                website.Password = model.password;
+                website.website_name = model.yourname;
+                website.website_adress = model.url;
                 website.Data = DateTime.Now;
 
                 await websiteContext.SaveChangesAsync();
 
-                return Ok(website);
+                return Ok();
 
             }
             catch (Exception ex)
@@ -200,8 +211,8 @@ namespace WebApplication1.Controllers
 
         }
 
-        [HttpDelete("entry/{sessionID}/{websiteID}")]
-        public async Task<ActionResult<Website>> DeleteEntry(string sessionID, string websiteID)
+        [HttpDelete("entry")]
+        public async Task<ActionResult<Website>> DeleteEntry([FromQuery] string sessionID, [FromQuery] string websiteID)
         {
             try
             {
@@ -231,13 +242,31 @@ namespace WebApplication1.Controllers
                 websiteContext.Website.Remove(website);
                 await websiteContext.SaveChangesAsync();
 
-                return Ok(website);
+                return Ok();
 
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error: {ex.Message}");
             }
+        }
+
+        [HttpGet("generator")]
+        public async Task<ActionResult<PasswordGenerator>> GeneratePassword([FromQuery] int length, [FromQuery] bool useLower, [FromQuery] bool useUpper, [FromQuery] bool useDigits, [FromQuery] bool useSpecial)
+        {
+            try
+            {
+                var passwordGenerator = new PasswordGenerator
+                {
+                    password = PasswordGenerator.GeneratePassword(length, useLower, useUpper, useDigits, useSpecial)
+                };
+                return Ok(passwordGenerator);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+
         }
     }
 }

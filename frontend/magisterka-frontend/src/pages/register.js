@@ -3,6 +3,7 @@ import Navbar from '../components/upperbar';
 import '../css/login.css'
 import Switch from "react-switch";
 import LowerBar from '../components/lowerbar';
+import {useNavigate} from 'react-router-dom';
 
 function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -13,6 +14,7 @@ function RegisterPage() {
   const [twoFAtype, setTwoFAtype] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const validateEmail = (email) => {
     // regex to check if the email input is valid
@@ -26,32 +28,34 @@ function RegisterPage() {
     setIsValidEmail(validateEmail(input));
   };
 
+  async function registerUser(data) {
+    try {
+      return await fetch('/api/User/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      }).then(data => data.json())
+    }
+    catch (error)
+    {
+      console.error(error);
+      setError('An error occurred while trying to register');
+    }
+  }
 
   const handleRegisterClick = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch('/api/User/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password, email, twoFA, twoFAtype }),
+      const value = await registerUser({
+        username,
+        password,
+        email,
+        twoFA,
+        twoFAtype
       });
-      if (response.ok) {
-        setSuccess(true);
-      } else {
-        setError('Invalid username or password');
-      }
-    } catch (error) {
-      console.error(error);
-      setError('An error occurred while trying to login');
-    }
-  };
-
-  if (success) {
-    return <div>You have registered!</div>;
-  }
-
+      navigate('/login');
+    };
   return (
     <div>
       <Navbar />

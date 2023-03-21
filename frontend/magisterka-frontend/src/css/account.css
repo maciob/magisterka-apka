@@ -1,0 +1,122 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+  }
+  
+  /* login form styles */
+  .account_form {
+    max-width: 450px;
+    margin: 20px auto;
+    padding: 20px;
+    margin-bottom: 8px;
+    background-color: white;
+    border-radius: 5%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .account_form__input-group {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 30px;
+    margin-top: 16px;
+    height: 30px;
+  }
+  
+  .account_form__label {
+    margin-left: 20px;
+    font-size: 22px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    vertical-align: middle;
+  }
+  
+  .account_form__input {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  
+  .account_form__error {
+    color: red;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  
+  .account_form__button {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  
+  .account_form__success {
+    color: green;
+    font-size: 24px;
+    margin-top: 16px;
+  }
+  
+  .account_menu-middle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .account_menu-middle-2 {
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+  }
+
+
+  .account_menu-button {
+    background-color: #333;
+    color: #fff;
+    font-size: 20px;
+    width: 200px;
+    height: 40px;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out,
+      box-shadow 0.2s ease-in-out;
+    margin-right: 30px;
+
+  }
+  
+  .account_menu-button:hover {
+    background-color: #fff;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .react-switch {
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  #a1 {
+    width: 50%;
+  }
+  #a2 {
+    width: 33%;
+  }
+  #a3 {
+    width: 10%;
+    vertical-align: middle;
+  }
+  #a4 {
+    width: 80%;
+    vertical-align: middle;
+  }
+  

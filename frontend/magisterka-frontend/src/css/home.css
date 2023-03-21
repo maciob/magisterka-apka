@@ -17,6 +17,10 @@
   
   .details {
     flex-basis: 70%;
+    height: calc(100vh - 150px); /* Set a fixed height for the container */
+    overflow: auto; /* Add overflow: auto; to make the container scrollable */
+    min-width: 350px;
+  
     background-color: #fff;
   }
   

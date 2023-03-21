@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -9,6 +10,7 @@ using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
+    [EnableCors("CorsApi")]
     [ApiController]
     [Route("api/[controller]")]
     public class UserController : ControllerBase
@@ -17,6 +19,7 @@ namespace WebApplication1.Controllers
         private readonly SessionContext sessionContext;
         private readonly UserSessionContext userSessionContext;
         private readonly WebsiteContext websiteContext;
+        private readonly GoogleTOTP tp;
 
         public UserController(UserContext context,SessionContext context2,UserSessionContext context3,WebsiteContext context4)
         {
@@ -27,45 +30,83 @@ namespace WebApplication1.Controllers
         }
 
         // curl -v -X POST -H "Content-Type: application/json" -d "{\'Username\':\'testuser\',\'Password\':\'testpass\',\'Email\':\'teste@xample.com\',\'TwoFA\':\'TRUE\',\'TwoFAtype\':\'TRUE\'}" https://localhost:5001/api/User/register
-        [HttpPost("register/{username}/{password}/{email}/{twoFA}/{twoFAtype}")]
-        public async Task<ActionResult<User>> Register(string username, string password, string email, bool twoFA,bool? twoFAtype)
+        [HttpPost("register")]
+        public async Task<ActionResult<User>> Register([FromBody] RegisterModel model)
         {
-            //need to check if such a user exists
-
-            var user = new User
+            try
             {
-                ID_user = Guid.NewGuid(),
-                Login = username,
-                Password = password,
-                TwoFA = twoFA,
-                Type_of_2FA = twoFAtype,
-                E_mail = email,
-                TwoFA_code = 1,
-                Activated = false
-            };
+                var checklogin = await userContext.User_data.FirstOrDefaultAsync(u => u.Login == model.username);
+                if (checklogin != null) 
+                {
+                    return BadRequest("Such a user already exists.");
+                }
 
-            var session = new Session
+                string url = "";
+                string privateKey = "";
+
+                if (model.twoFA == true)
+                {
+                    if (model.twoFAtype == "Google Authenticator")
+                    {
+                        string randomString = Transcoder.Base32Encode(tp.randomBytes);
+                        string ProvisionUrl = tp.UrlEncode(String.Format("otpauth://totp/{0}?secret={1}", "PasswordManager", randomString));
+                        url = String.Format("http://chart.apis.google.com/chart?cht=qr&chs={0}x{1}&chl={2}", 200, 200, ProvisionUrl);
+                        privateKey = tp.getPrivateKey(tp.randomBytes);
+                    }
+                    else if (model.twoFAtype == "Email")
+                    {
+                        //EMAIL TO DO
+                    }
+                }
+
+                var user = new User
+                {
+                    ID_user = Guid.NewGuid(),
+                    Login = model.username,
+                    Password = model.password,
+                    TwoFA = model.twoFA,
+                    Type_of_2FA = model.twoFAtype,
+                    E_mail = model.email,
+                    TwoFA_code = privateKey,
+                    Activated = false
+                };
+
+                var session = new Session
+                {
+                    Session_ID = Guid.NewGuid(),
+                    Data = DateTime.Now,
+                    Active = true
+                };
+
+                var usersession = new UserSession
+                {
+                    Session_ID = session.Session_ID,
+                    ID_user = user.ID_user
+                };
+
+                var response = new RegisterResponse
+                {
+                    sessionID = session.Session_ID,
+                    twoFA = model.twoFA,
+                    type = model.twoFAtype,
+                    url = url,
+                    privateKey = privateKey
+                };
+
+                await userContext.User_data.AddAsync(user);
+                await sessionContext.Session.AddAsync(session);
+                await userSessionContext.User_session.AddAsync(usersession);
+
+                await userContext.SaveChangesAsync();
+                await sessionContext.SaveChangesAsync();
+                await userSessionContext.SaveChangesAsync();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
             {
-                Session_ID = Guid.NewGuid(),
-                Data = DateTime.Now,
-                Active = true
-            };
-
-            var usersession = new UserSession
-            {
-                Session_ID = session.Session_ID,
-                ID_user = user.ID_user
-            };
-
-            await userContext.User_data.AddAsync(user);
-            await sessionContext.Session.AddAsync(session);
-            await userSessionContext.User_session.AddAsync(usersession);
-
-            await userContext.SaveChangesAsync();
-            await sessionContext.SaveChangesAsync();
-            await userSessionContext.SaveChangesAsync();
-
-            return Ok(session.Session_ID);
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
         }
 
         //curl -v -X PUT https://localhost:5001/api/User/activate/f368faf0-daa0-4628-9541-67bdf8b2cd56 -H "Content-Length: 0"
@@ -227,6 +268,33 @@ namespace WebApplication1.Controllers
             }
         }
 
+        [HttpPost("logout")]
+        public async Task<ActionResult<User>> Logout([FromQuery]string sessionID)
+        {
+            try
+            {
+                var session = await sessionContext.Session.FindAsync(new Guid(sessionID));
+                if (session == null)
+                {
+                    return NotFound("Your session is invalid.");
+                }
+
+                if (session.Active == false)
+                {
+                    return Unauthorized("Your session has already been expired.");
+                }
+
+                session.Active = false;
+
+                await sessionContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
 
 
         [HttpGet("check")]

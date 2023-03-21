@@ -7,40 +7,20 @@ function MyList() {
 
   useEffect(() => {
     fetch('/api/Website/list?sessionID='+sessionStorage.getItem('sessionID')+'&hash='+sessionStorage.getItem('hash'))
-      .then(response => response.json())
-      .then(data => setItems(data))
-      .catch(error => console.log(error));
-  });
-
-  const data = [
-    { id: 1, text: 'Lorem ipsum dolor sit amet', icon: 'github.png'},
-    { id: 2, text: 'consectetur adipiscing elit', icon: 'airbnb.png'},
-    { id: 3, text: 'sed do eiusmod tempor', icon: 'github.png' },
-    { id: 4, text: 'Lorem ipsum dolor sit amet', icon: 'github.png' },
-    { id: 5, text: 'consectetur adipiscing elit', icon: 'github.png' },
-    { id: 6, text: 'sed do eiusmod tempor', icon: 'github.png' },
-    { id: 7, text: 'Lorem ipsum dolor sit amet', icon: 'github.png' },
-    { id: 8, text: 'consectetur adipiscing elit', icon: 'github.png' },
-    { id: 9, text: 'sed do eiusmod tempor', icon: 'github.png' },
-    { id: 10, text: 'Lorem ipsum dolor sit amet', icon: 'github.png' },
-    { id: 11, text: 'Lorem ipsum dolor sit amet', icon: 'github.png' },
-    { id: 12, text: 'consectetur adipiscing elit', icon: 'github.png' },
-    { id: 13, text: 'sed do eiusmod tempor', icon: 'github.png' },
-    { id: 14, text: 'Lorem ipsum dolor sit amet', icon: 'github.png' },
-    { id: 15, text: 'consectetur adipiscing elit', icon: 'github.png' },
-    { id: 16, text: 'sed do eiusmod tempor', icon: 'github.png' },
-    { id: 17, text: 'Lorem ipsum dolor sit amet', icon: 'github.png' },
-    { id: 18, text: 'consectetur adipiscing elit', icon: 'github.png' },
-    { id: 19, text: 'sed do eiusmod tempor', icon: 'github.png' },
-    { id: 20, text: 'Lorem ipsum dolor sit amet', icon: 'github.png' },
-    { id: 21, text: 'consectetur adipiscing elit', icon: 'github.png' },
-    { id: 22, text: 'sed do eiusmod tempor', icon: 'github.png' },
-
-    // ... more data objects
-  ];
+      .then(response => {
+        if(response.status === 200){
+            return response.json();
+        }else {
+          console.log(response.status)
+          sessionStorage.setItem('sessionID','');
+          sessionStorage.setItem('sessionExpired', true);
+          window.location.reload(false)
+        }
+      })
+      .then(data => setItems(data));
+  },[]);
 
   const handleClick = (id) => {
-    console.log(`Button with ID ${id} clicked`);
     sessionStorage.setItem('Entry', true);
     sessionStorage.setItem('Account', false);
     sessionStorage.setItem('PasswordGenerator', false);
@@ -50,20 +30,24 @@ function MyList() {
     window.location.reload(false)
   };
 
+  const handleImgClick = (entry) => {
+    window.open(entry.website_adress, "_blank")
+  };
+
   return (
     <div className="table-container">
       <table className="table">
         <tbody>
-          {data.map((entry) => (
-            <tr key={entry.id}>
+          {items.map((entry) => (
+            <tr key={entry.iD_website}>
               <td className="td">
-                <button onClick={() => handleClick(entry.id)}>
-                  <img src={'/icons/' + entry.icon} alt="icon" width="40" height="40" />
+                <button onClick={() => handleImgClick(entry)}>
+                  <img src={'/icons/' + entry.icon} alt="icon" width="40" height="40"/>
                 </button>
               </td>
               <td>
-                <button className="button" onClick={() => handleClick(entry.id)}>
-                  {entry.text}
+                <button className="button" onClick={() => handleClick(entry.iD_website)}>
+                  {entry.website_name}
                 </button>
               </td>
             </tr>
@@ -71,14 +55,6 @@ function MyList() {
         </tbody>
       </table>
     </div>
-    // <div className="my-list">
-    //   <h1>My List</h1>
-    //   <ul>
-    //     {items.map(item => (
-    //       <li key={item.ID_website}>{item.website_name}</li>
-    //     ))}
-    //   </ul>
-    // </div>
   );
 }
 
