@@ -6,7 +6,6 @@ namespace WebApplication1.Models
 {
     public class PasswordGenerator
     {
-        public string password { get; set; }
         public static string GeneratePassword(int length = 16, bool useLower = true, bool useUpper = true, bool useDigits = true, bool useSpecial = true)
         {
             // Define the character sets to choose from based on the settings

@@ -21,7 +21,7 @@ namespace WebApplication1.Models
         [Column(TypeName = "bit")]
         public bool TwoFA { get; set; }
 
-        [Column(TypeName = "bit")]
+        [Column(TypeName = "nvarchar(50)")]
         public string? Type_of_2FA { get; set; }
 
         [Required]

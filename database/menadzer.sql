@@ -27,12 +27,12 @@ GO
 CREATE TABLE User_data
 (
     ID_user UNIQUEIDENTIFIER PRIMARY KEY,
-    Login VARCHAR(50) NOT NULL,
-    Password VARCHAR(50) NOT NULL,
+    Login VARCHAR(128) NOT NULL,
+    Password VARCHAR(128) NOT NULL,
     TwoFA BIT NOT NULL,
-    Type_of_2FA VARCHAR(50),
-    E_mail VARCHAR(50) NOT NULL,
-    TwoFA_code VARCHAR(50),
+    Type_of_2FA VARCHAR(128),
+    E_mail VARCHAR(128) NOT NULL,
+    TwoFA_code VARCHAR(128),
     Activated BIT NOT NULL
 );
 GO
@@ -49,10 +49,11 @@ CREATE TABLE Website
 (
     ID_website BIGINT PRIMARY KEY IDENTITY(1,1),
     ID_user UNIQUEIDENTIFIER NOT NULL REFERENCES User_data(ID_user),
-    website_name VARCHAR(50) NOT NULL,
-    website_adress VARCHAR(50) NOT NULL,
-    Login VARCHAR(50) NOT NULL,
-    Password VARCHAR(50) NOT NULL,
-    Data DATETIME NOT NULL
+    website_name VARCHAR(128) NOT NULL,
+    website_adress VARCHAR(128) NOT NULL,
+    Login VARCHAR(128) NOT NULL,
+    Password VARCHAR(128) NOT NULL,
+    Data DATETIME NOT NULL,
+    Icon VARCHAR(128) NOT NULL
 );
 GO

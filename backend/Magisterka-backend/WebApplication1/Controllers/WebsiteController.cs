@@ -256,7 +256,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var passwordGenerator = new PasswordGenerator
+                var passwordGenerator = new
                 {
                     password = PasswordGenerator.GeneratePassword(length, useLower, useUpper, useDigits, useSpecial)
                 };

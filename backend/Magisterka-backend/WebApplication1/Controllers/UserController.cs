@@ -27,6 +27,7 @@ namespace WebApplication1.Controllers
             sessionContext = context2;
             userSessionContext = context3;
             websiteContext = context4;
+            tp = new GoogleTOTP();
         }
 
         // curl -v -X POST -H "Content-Type: application/json" -d "{\'Username\':\'testuser\',\'Password\':\'testpass\',\'Email\':\'teste@xample.com\',\'TwoFA\':\'TRUE\',\'TwoFAtype\':\'TRUE\'}" https://localhost:5001/api/User/register
@@ -43,15 +44,21 @@ namespace WebApplication1.Controllers
 
                 string url = "";
                 string privateKey = "";
+                string code = "";
 
                 if (model.twoFA == true)
                 {
                     if (model.twoFAtype == "Google Authenticator")
                     {
                         string randomString = Transcoder.Base32Encode(tp.randomBytes);
-                        string ProvisionUrl = tp.UrlEncode(String.Format("otpauth://totp/{0}?secret={1}", "PasswordManager", randomString));
+                        string ProvisionUrl = tp.UrlEncode(String.Format("otpauth://totp/{0} ({1})?secret={2}", "PasswordManager", model.username , randomString));
                         url = String.Format("http://chart.apis.google.com/chart?cht=qr&chs={0}x{1}&chl={2}", 200, 200, ProvisionUrl);
                         privateKey = tp.getPrivateKey(tp.randomBytes);
+                        code = "";
+                        foreach (byte b in tp.randomBytes)
+                        {
+                            code = code + b + " ";
+                        }
                     }
                     else if (model.twoFAtype == "Email")
                     {
@@ -63,11 +70,11 @@ namespace WebApplication1.Controllers
                 {
                     ID_user = Guid.NewGuid(),
                     Login = model.username,
-                    Password = model.password,
+                    Password = AES.Encrypt(model.password,AES.Hash(model.password),"PasswordManager"),
                     TwoFA = model.twoFA,
                     Type_of_2FA = model.twoFAtype,
-                    E_mail = model.email,
-                    TwoFA_code = privateKey,
+                    E_mail = AES.Encrypt(model.email, AES.Hash(model.password), "PasswordManager"),
+                    TwoFA_code = AES.Encrypt(code, AES.Hash(model.password), "PasswordManager"),
                     Activated = false
                 };
 
@@ -75,7 +82,7 @@ namespace WebApplication1.Controllers
                 {
                     Session_ID = Guid.NewGuid(),
                     Data = DateTime.Now,
-                    Active = true
+                    Active = !model.twoFA
                 };
 
                 var usersession = new UserSession
@@ -84,7 +91,7 @@ namespace WebApplication1.Controllers
                     ID_user = user.ID_user
                 };
 
-                var response = new RegisterResponse
+                var response = new
                 {
                     sessionID = session.Session_ID,
                     twoFA = model.twoFA,
@@ -108,6 +115,59 @@ namespace WebApplication1.Controllers
                 return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+
+        [HttpPost("otp")]
+        public async Task<ActionResult<User>> OTP([FromBody] OTPModel model)
+        {
+            try 
+            {
+                var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
+                if (session == null)
+                {
+                    return NotFound("Your session is invalid.");
+                }
+
+                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(model.sessionID));
+                if (userSession == null)
+                {
+                    return NotFound("session/user");
+                }
+
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user);
+                if (user == null)
+                {
+                    return NotFound("user");
+                }
+
+                byte[] b = new byte[10];
+                string[] subs = user.TwoFA_code.Split(' ');
+                int i = 0;
+
+                foreach (var sub in subs)
+                {
+                    if (i == 10) break;
+                    b[i] = Convert.ToByte(Convert.ToInt32(sub));
+                    i++;
+                }
+
+                if (tp.generateResponseCode(tp.getCurrentInterval(), b) == model.code)
+                {
+                    session.Active = true;
+                    await sessionContext.SaveChangesAsync();
+                    var data = new { sessionID = session.Session_ID, hash = "asd" };
+                    return StatusCode(200, data);
+                }
+                else
+                {
+                    return BadRequest("Invalid code.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
 
         //curl -v -X PUT https://localhost:5001/api/User/activate/f368faf0-daa0-4628-9541-67bdf8b2cd56 -H "Content-Length: 0"
         [HttpPut("activate/{sessionID}")]
@@ -146,7 +206,7 @@ namespace WebApplication1.Controllers
                 user.Activated = true;
                 await userContext.SaveChangesAsync();
 
-                return Ok(user);
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -170,9 +230,17 @@ namespace WebApplication1.Controllers
                 var session = new Session
                 {
                     Session_ID = Guid.NewGuid(),
-                    Data = DateTime.Now,
-                    Active = true
+                    Data = DateTime.Now
                 };
+
+                if (user.TwoFA == true)
+                {
+                    session.Active = false;
+                }
+                else
+                {
+                    session.Active = true;
+                }
 
                 var usersession = new UserSession
                 {
