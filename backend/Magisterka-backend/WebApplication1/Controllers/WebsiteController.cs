@@ -69,6 +69,10 @@ namespace WebApplication1.Controllers
                     website.Password = "";
                 }
 
+                session.Data = DateTime.Now;
+
+                await sessionContext.SaveChangesAsync();
+
                 return Ok(websites);
 
             }
@@ -108,6 +112,13 @@ namespace WebApplication1.Controllers
                     return NotFound("Empty");
                 }
 
+                website.Login = AES.Decrypt(website.Login, hash);
+                website.Password = AES.Decrypt(website.Password, hash);
+
+                session.Data = DateTime.Now;
+
+                await sessionContext.SaveChangesAsync();
+
                 return Ok(website);
 
             }
@@ -144,15 +155,19 @@ namespace WebApplication1.Controllers
                 var website = new Website
                 {
                     ID_user = userSession.ID_user,
-                    Login = model.login,
-                    Password = model.password,
+                    Login = AES.Encrypt(model.login,model.hash),
+                    Password = AES.Encrypt(model.password, model.hash),
                     website_name = model.yourname,
-                    website_adress = model.url,
-                    Data = DateTime.Now
+                    website_adress = URL.GetFullUrl(model.url),
+                    Data = DateTime.Now,
+                    Icon = URL.CharStrip(model.url)
                 };
+
+                session.Data = DateTime.Now;
 
                 await websiteContext.Website.AddAsync(website);
 
+                await sessionContext.SaveChangesAsync();
                 await websiteContext.SaveChangesAsync();
 
                 return Ok();
@@ -193,12 +208,16 @@ namespace WebApplication1.Controllers
                     return NotFound("Empty");
                 }
 
-                website.Login = model.login;
-                website.Password = model.password;
+                website.Login = AES.Encrypt(model.login, model.hash);
+                website.Password = AES.Encrypt(model.password, model.hash);
                 website.website_name = model.yourname;
-                website.website_adress = model.url;
+                website.website_adress = URL.GetFullUrl(model.url);
                 website.Data = DateTime.Now;
+                website.Icon = URL.CharStrip(model.url);
 
+                session.Data = DateTime.Now;
+
+                await sessionContext.SaveChangesAsync();
                 await websiteContext.SaveChangesAsync();
 
                 return Ok();
@@ -240,6 +259,10 @@ namespace WebApplication1.Controllers
                 }
 
                 websiteContext.Website.Remove(website);
+
+                session.Data = DateTime.Now;
+
+                await sessionContext.SaveChangesAsync();
                 await websiteContext.SaveChangesAsync();
 
                 return Ok();

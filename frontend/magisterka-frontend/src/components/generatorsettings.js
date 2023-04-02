@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/login.css'
+import '../css/account.css'
+import '../css/entry.css'
 import Switch from "react-switch";
 
 function GeneratorSettings() {
@@ -31,22 +33,22 @@ function GeneratorSettings() {
 
   return (
     <div>
-      <div className="form">
+      <div className="account_form">
         <form onSubmit={handleSubmitClick}>
             <div className="form__input-group">
-                <label htmlFor="length" className="form__label">Length</label>
+                <label htmlFor="length" className="account_form__label">Length</label>
                 <input
                     type="text"
                     id="length"
                     value={length}
                     onChange={(e) => setLength(e.target.value)}
-                    className="form__input"
+                    className="entry__form__input"
                 />
             </div>
             <div className="form__input-group">
-                <label htmlFor="lower" className="form__label">Lower characters</label>
+                <label htmlFor="lower" className="account_form__label">Lower characters</label>
                 <div className="form__toggle">
-                    <label>
+                    <label id="a1">
                         <Switch 
                             onChange={(checked) => setLower(checked)} 
                             checked={lower}
@@ -56,7 +58,7 @@ function GeneratorSettings() {
                 </div>
             </div>
             <div className="form__input-group">
-                <label htmlFor="upper" className="form__label">Upper characters</label>
+                <label htmlFor="upper" className="account_form__label">Upper characters</label>
                 <div className="form__toggle">
                     <label>
                         <Switch 
@@ -68,7 +70,7 @@ function GeneratorSettings() {
                 </div>
             </div>
             <div className="form__input-group">
-                <label htmlFor="special" className="form__label">Special characters</label>
+                <label htmlFor="special" className="account_form__label">Special characters</label>
                 <div className="form__toggle">
                     <label>
                         <Switch 
@@ -80,7 +82,7 @@ function GeneratorSettings() {
                 </div>
             </div>
             <div className="form__input-group">
-                <label htmlFor="numbers" className="form__label">Numbers</label>
+                <label htmlFor="numbers" className="account_form__label">Numbers</label>
                 <div className="form__toggle">
                     <label>
                         <Switch 
@@ -91,7 +93,7 @@ function GeneratorSettings() {
                     </label>
                 </div>
             </div>
-            <button type="submit" className="form__button">Save</button>
+            <button type="submit" className="account_menu-button">Save</button>
         </form>
       </div>
     </div>

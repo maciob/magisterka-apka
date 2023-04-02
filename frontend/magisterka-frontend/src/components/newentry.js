@@ -16,9 +16,16 @@ function NewEntry() {
         }
       }, []);
     const sendData = async () => {
-        const data = await fetch('/api/Website/generator?length='+parseInt(sessionStorage.getItem('SettingsLength'), 10)+'&useLower='+JSON.parse(sessionStorage.getItem('SettingsLower'))+'&useUpper='+JSON.parse(sessionStorage.getItem('SettingsUpper'))+'&useDigits='+JSON.parse(sessionStorage.getItem('SettingsNumbers'))+'&useSpecial='+JSON.parse(sessionStorage.getItem('SettingsSpecial')))
-        const json = await data.json();
-        setPassword(json.password)
+        if(sessionStorage.getItem('SettingsLength') == null || sessionStorage.getItem('SettingsLower') == null || sessionStorage.getItem('SettingsUpper') == null || sessionStorage.getItem('SettingsNumbers') == null || sessionStorage.getItem('SettingsSpecial') == null)
+        {
+            const data = await fetch('/api/Website/generator?length=16&useLower=true&useUpper=true&useDigits=true&useSpecial=true')
+            const json = await data.json();   
+            setPassword(json.password) 
+        } else {
+            const data = await fetch('/api/Website/generator?length='+parseInt(sessionStorage.getItem('SettingsLength'), 10)+'&useLower='+JSON.parse(sessionStorage.getItem('SettingsLower'))+'&useUpper='+JSON.parse(sessionStorage.getItem('SettingsUpper'))+'&useDigits='+JSON.parse(sessionStorage.getItem('SettingsNumbers'))+'&useSpecial='+JSON.parse(sessionStorage.getItem('SettingsSpecial')))
+            const json = await data.json();    
+            setPassword(json.password)
+        }
     }
 
     const handleConfirmClick = async (e) => {
@@ -56,7 +63,7 @@ function NewEntry() {
 
   return (
       <div className="entry__form">
-            <form onSubmit={handleConfirmClick}>
+            <form autoComplete="off" onSubmit={handleConfirmClick}>
                 <div className='entry__form__input-group'>
                     <label id="c1" className="entry__form__label">Your Name</label>
                         <input
@@ -71,6 +78,7 @@ function NewEntry() {
                         <input
                             type="text"
                             value={login}
+                            // autoComplete="off"
                             onChange={(e) => setLogin(e.target.value)}
                             className="entry__form__input"
                         />
@@ -86,6 +94,7 @@ function NewEntry() {
                                 <input
                                     type="password"
                                     value={password}
+                                    autoComplete="new-password"
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="entry__form__input"
                                 />
@@ -93,6 +102,7 @@ function NewEntry() {
                                 <input
                                     type="text"
                                     value={password}
+                                    autoComplete="new-password"
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="entry__form__input"
                                 />

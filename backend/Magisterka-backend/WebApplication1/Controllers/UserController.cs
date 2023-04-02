@@ -20,6 +20,7 @@ namespace WebApplication1.Controllers
         private readonly UserSessionContext userSessionContext;
         private readonly WebsiteContext websiteContext;
         private readonly GoogleTOTP tp;
+        private readonly Mailing mail;
 
         public UserController(UserContext context,SessionContext context2,UserSessionContext context3,WebsiteContext context4)
         {
@@ -28,9 +29,9 @@ namespace WebApplication1.Controllers
             userSessionContext = context3;
             websiteContext = context4;
             tp = new GoogleTOTP();
+            mail = new Mailing();
         }
 
-        // curl -v -X POST -H "Content-Type: application/json" -d "{\'Username\':\'testuser\',\'Password\':\'testpass\',\'Email\':\'teste@xample.com\',\'TwoFA\':\'TRUE\',\'TwoFAtype\':\'TRUE\'}" https://localhost:5001/api/User/register
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register([FromBody] RegisterModel model)
         {
@@ -52,7 +53,7 @@ namespace WebApplication1.Controllers
                     {
                         string randomString = Transcoder.Base32Encode(tp.randomBytes);
                         string ProvisionUrl = tp.UrlEncode(String.Format("otpauth://totp/{0} ({1})?secret={2}", "PasswordManager", model.username , randomString));
-                        url = String.Format("http://chart.apis.google.com/chart?cht=qr&chs={0}x{1}&chl={2}", 200, 200, ProvisionUrl);
+                        url = String.Format("https://chart.apis.google.com/chart?cht=qr&chs={0}x{1}&chl={2}", 200, 200, ProvisionUrl);
                         privateKey = tp.getPrivateKey(tp.randomBytes);
                         code = "";
                         foreach (byte b in tp.randomBytes)
@@ -62,7 +63,7 @@ namespace WebApplication1.Controllers
                     }
                     else if (model.twoFAtype == "Email")
                     {
-                        //EMAIL TO DO
+                        code = PasswordGenerator.GeneratePassword(6, false, false, true, false);
                     }
                 }
 
@@ -70,11 +71,11 @@ namespace WebApplication1.Controllers
                 {
                     ID_user = Guid.NewGuid(),
                     Login = model.username,
-                    Password = AES.Encrypt(model.password,AES.Hash(model.password),"PasswordManager"),
+                    Password = AES.Encrypt(model.password,AES.Hash(model.password)),
                     TwoFA = model.twoFA,
                     Type_of_2FA = model.twoFAtype,
-                    E_mail = AES.Encrypt(model.email, AES.Hash(model.password), "PasswordManager"),
-                    TwoFA_code = AES.Encrypt(code, AES.Hash(model.password), "PasswordManager"),
+                    E_mail = AES.Encrypt(model.email, AES.Hash(model.password)),
+                    TwoFA_code = AES.Encrypt(code, AES.Hash(model.password)),
                     Activated = false
                 };
 
@@ -97,9 +98,11 @@ namespace WebApplication1.Controllers
                     twoFA = model.twoFA,
                     type = model.twoFAtype,
                     url = url,
-                    privateKey = privateKey
+                    privateKey = privateKey,
+                    hash = AES.Hash(model.password)
                 };
 
+                await mail.SendActivate(model.email, session.Session_ID.ToString());
                 await userContext.User_data.AddAsync(user);
                 await sessionContext.Session.AddAsync(session);
                 await userSessionContext.User_session.AddAsync(usersession);
@@ -138,28 +141,46 @@ namespace WebApplication1.Controllers
                 {
                     return NotFound("user");
                 }
-
-                byte[] b = new byte[10];
-                string[] subs = user.TwoFA_code.Split(' ');
-                int i = 0;
-
-                foreach (var sub in subs)
+                if (model.twoFAtype == "Google Authenticator")
                 {
-                    if (i == 10) break;
-                    b[i] = Convert.ToByte(Convert.ToInt32(sub));
-                    i++;
-                }
+                    byte[] b = new byte[10];
+                    string[] subs = AES.Decrypt(user.TwoFA_code, model.hash).Split(' ');
+                    int i = 0;
 
-                if (tp.generateResponseCode(tp.getCurrentInterval(), b) == model.code)
-                {
-                    session.Active = true;
-                    await sessionContext.SaveChangesAsync();
-                    var data = new { sessionID = session.Session_ID, hash = "asd" };
-                    return StatusCode(200, data);
+                    foreach (var sub in subs)
+                    {
+                        if (i == 10) break;
+                        b[i] = Convert.ToByte(Convert.ToInt32(sub));
+                        i++;
+                    }
+
+                    if (tp.generateResponseCode(tp.getCurrentInterval(), b) == model.code)
+                    {
+                        session.Active = true;
+                        session.Data = DateTime.Now;
+                        await sessionContext.SaveChangesAsync();
+                        var data = new { sessionID = session.Session_ID, hash = model.hash };
+                        return StatusCode(200, data);
+                    }
+                    else
+                    {
+                        return BadRequest("Invalid code.");
+                    }
                 }
                 else
                 {
-                    return BadRequest("Invalid code.");
+                    if (AES.Decrypt(user.TwoFA_code, model.hash) == model.code)
+                    {
+                        session.Active = true;
+                        session.Data = DateTime.Now;
+                        await sessionContext.SaveChangesAsync();
+                        var data = new { sessionID = session.Session_ID, hash = model.hash };
+                        return StatusCode(200, data);
+                    }
+                    else 
+                    {
+                        return BadRequest("Invalid code.");
+                    }
                 }
             }
             catch (Exception ex)
@@ -169,33 +190,133 @@ namespace WebApplication1.Controllers
         }
 
 
-        //curl -v -X PUT https://localhost:5001/api/User/activate/f368faf0-daa0-4628-9541-67bdf8b2cd56 -H "Content-Length: 0"
-        [HttpPut("activate/{sessionID}")]
-        public async Task<ActionResult<User>> Acivate(string sessionID)
+        [HttpPut("otp")]
+        public async Task<ActionResult<User>> OTPChange([FromBody] OTPChangeModel model)
+        {
+            try
+            {
+                var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
+                if (session == null)
+                {
+                    return NotFound("Your session is invalid.");
+                }
+
+                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(model.sessionID));
+                if (userSession == null)
+                {
+                    return NotFound("session/user");
+                }
+
+                var encryptedPassword = AES.Encrypt(model.confirmedPassword, AES.Hash(model.confirmedPassword));
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user && u.Password == encryptedPassword);
+                if (user == null)
+                {
+                    return Unauthorized("Wrong password.");
+                }
+
+                session.Data = DateTime.Now;
+
+                await sessionContext.SaveChangesAsync();
+
+                if ((model.twoFA == false && user.TwoFA == false) || (model.twoFA == true && user.TwoFA == true && model.twoFAtype == user.Type_of_2FA))
+                {
+                    return StatusCode(304);
+                }
+                else
+                {
+                    if (model.twoFAtype == "Google Authenticator")
+                    {
+                        string randomString = Transcoder.Base32Encode(tp.randomBytes);
+                        string ProvisionUrl = tp.UrlEncode(String.Format("otpauth://totp/{0} ({1})?secret={2}", "PasswordManager", user.Login, randomString));
+                        var url = String.Format("https://chart.apis.google.com/chart?cht=qr&chs={0}x{1}&chl={2}", 200, 200, ProvisionUrl);
+                        var privateKey = tp.getPrivateKey(tp.randomBytes);
+                        var code = "";
+                        foreach (byte b in tp.randomBytes)
+                        {
+                            code = code + b + " ";
+                        }
+                        user.TwoFA = model.twoFA;
+                        user.Type_of_2FA = model.twoFAtype;
+                        user.TwoFA_code = AES.Encrypt(code, AES.Hash(model.confirmedPassword));
+
+                        var response = new
+                        {
+                            twoFA = model.twoFA,
+                            type = model.twoFAtype,
+                            url = url,
+                            privateKey = privateKey           
+                        };
+
+                        await userContext.SaveChangesAsync();
+
+                        return Ok(response);
+                    }
+                    else if (model.twoFAtype == "Email")
+                    {
+                        user.TwoFA = model.twoFA;
+                        user.Type_of_2FA = model.twoFAtype;
+                        user.TwoFA_code = "";
+
+                        await userContext.SaveChangesAsync();
+
+                        var response = new
+                        {
+                            twoFA = model.twoFA,
+                            type = model.twoFAtype,
+                        };
+
+                        return Ok(response);
+                    }
+                    else 
+                    {
+                        user.TwoFA = false;
+                        user.Type_of_2FA = "";
+                        user.TwoFA_code = "";
+
+                        await userContext.SaveChangesAsync();
+
+                        var response = new
+                        {
+                            twoFA = false,
+                            type = "",
+                        };
+
+                        return Ok();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+        [HttpPut("activate")]
+        public async Task<ActionResult<User>> Acivate([FromQuery]string sessionID)
         {
             try
             {
                 var session = await sessionContext.Session.FindAsync(new Guid(sessionID));
                 if (session == null)
                 {
-                    return NotFound();
+                    return NotFound("session");
                 }
 
-                if (session.Active == false)
+                /*if (session.Active == false)
                 {
                     return Unauthorized("Your session has expired or is invalid.");
-                }
+                }*/
 
                 var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(sessionID));
                 if (userSession == null)
                 {
-                    return NotFound();
+                    return NotFound("user/session");
                 }
 
                 var user = await userContext.User_data.FindAsync(userSession.ID_user);
                 if (user == null)
                 {
-                    return NotFound();
+                    return NotFound("user");
                 }
 
                 if (user.Activated == true) 
@@ -215,18 +336,23 @@ namespace WebApplication1.Controllers
 
         }
 
-        //curl -v -X POST -H "Content-Type: application/json" -d "{\'Username\':\'testuser\',\'Password\':\'testpass\'}" https://localhost:5001/api/User/login
         [HttpPost("login")]
         public async Task<ActionResult<User>> Login([FromBody]LoginModel model)
         {
             try
             {
-                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.Login == model.username && u.Password == model.password);
+                var encryptedPassword = AES.Encrypt(model.password, AES.Hash(model.password));
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.Login == model.username && u.Password == encryptedPassword);
+
                 if (user == null)
                 {
                     return NotFound();
                 }
-       
+                if (user.Activated == false) 
+                {
+                    return StatusCode(401,"Account not activated.");
+                }
+
                 var session = new Session
                 {
                     Session_ID = Guid.NewGuid(),
@@ -236,12 +362,17 @@ namespace WebApplication1.Controllers
                 if (user.TwoFA == true)
                 {
                     session.Active = false;
-                }
-                else
-                {
+                } else {
                     session.Active = true;
                 }
+                if (user.Type_of_2FA == "Email") 
+                {
+                    var generatedCode = PasswordGenerator.GeneratePassword(6, false, false, true, false);
+                    user.TwoFA_code = AES.Encrypt(generatedCode, AES.Hash(model.password));
 
+                    await mail.SendOTP(AES.Decrypt(user.E_mail, AES.Hash(model.password)), generatedCode);
+                    await userContext.SaveChangesAsync();
+                }
                 var usersession = new UserSession
                 {
                     Session_ID = session.Session_ID,
@@ -256,12 +387,12 @@ namespace WebApplication1.Controllers
 
                 if (user.TwoFA == true)
                 {
-                    var data = new { sessionID = session.Session_ID, hash = "asd", otp = true, type = user.Type_of_2FA };
+                    var data = new { sessionID = session.Session_ID, hash = AES.Hash(model.password), otp = true, type = user.Type_of_2FA };
                     return StatusCode(200, data);
                 }
                 else 
                 {
-                    var data = new { sessionID = session.Session_ID, hash = "asd", otp = false };
+                    var data = new { sessionID = session.Session_ID, hash = AES.Hash(model.password), otp = false };
                     return StatusCode(200, data);
                 }
             }
@@ -271,12 +402,12 @@ namespace WebApplication1.Controllers
             }
         }
 
-        [HttpDelete("delete/{sessionID}")]
-        public async Task<ActionResult<User>> DeleteUser(string sessionID)
+        [HttpDelete("delete")]
+        public async Task<ActionResult<User>> DeleteUser([FromBody] DeleteAccountModel model)
         {
             try
             {
-                var session = await sessionContext.Session.FindAsync(new Guid(sessionID));
+                var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
                 if (session == null)
                 {
                     return NotFound("Your session is invalid.");
@@ -287,13 +418,14 @@ namespace WebApplication1.Controllers
                     return Unauthorized("Your session has expired.");
                 }
 
-                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(sessionID));
+                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(model.sessionID));
                 if (userSession == null)
                 {
                     return NotFound("session/user");
                 }
 
-                var user = await userContext.User_data.FirstOrDefaultAsync(us => us.ID_user == userSession.ID_user);
+                var encryptedPassword = AES.Encrypt(model.confirmedPassword, AES.Hash(model.confirmedPassword));
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user && u.Password == encryptedPassword);
                 if (user == null)
                 {
                     return NotFound("Empty");
@@ -307,8 +439,6 @@ namespace WebApplication1.Controllers
                         websiteContext.Website.Remove(website);
                     }
                 }
-
-                // var Sessions = await sessionContext.Session.Where()
 
                 var userSessions = await userSessionContext.User_session.Where(us => us.ID_user == userSession.ID_user).ToListAsync();
                 if (userSessions != null)
@@ -364,14 +494,116 @@ namespace WebApplication1.Controllers
             }
         }
 
+        [HttpPut("password")]
+        public async Task<ActionResult<User>> ChangePassword ([FromBody] ChangePasswordModel model)
+        {
+            try
+            {
+                var encryptedPassword = AES.Encrypt(model.oldPassword, AES.Hash(model.oldPassword));
+
+                var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
+                if (session == null)
+                {
+                    return NotFound("Your session is invalid.");
+                }
+
+                if (session.Active == false)
+                {
+                    return Unauthorized("Your session has expired.");
+                }
+
+                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(model.sessionID));
+                if (userSession == null)
+                {
+                    return NotFound("session/user");
+                }
+
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user && u.Password == encryptedPassword);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                user.Password = AES.Encrypt(model.newPassword, AES.Hash(model.newPassword));
+                user.E_mail = AES.Encrypt(AES.Decrypt(user.E_mail, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
+                user.TwoFA_code = AES.Encrypt(AES.Decrypt(user.TwoFA_code, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
+
+                var websites = await websiteContext.Website.Where(w => w.ID_user == userSession.ID_user).ToListAsync();
+                if (websites == null)
+                {
+                    return NotFound("Empty");
+                }
+
+                foreach (var website in websites)
+                {
+                    website.Login = AES.Encrypt(AES.Decrypt(website.Login, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
+                    website.Password = AES.Encrypt(AES.Decrypt(website.Password, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
+                }
+
+                session.Data = DateTime.Now;
+
+                await sessionContext.SaveChangesAsync();
+                await userContext.SaveChangesAsync();
+                await websiteContext.SaveChangesAsync();
+
+                var data = new { hash = AES.Hash(model.newPassword) };
+
+                return StatusCode(200, data);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("account")]
+        public async Task<ActionResult<User>> GetAccount([FromQuery] string sessionID, [FromQuery] string hash)
+        {
+            try
+            {
+                var session = await sessionContext.Session.FindAsync(new Guid(sessionID));
+                if (session == null)
+                {
+                    return NotFound("Your session is invalid.");
+                }
+
+                if (session.Active == false)
+                {
+                    return Unauthorized("Your session has expired.");
+                }
+
+                var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(sessionID));
+                if (userSession == null)
+                {
+                    return NotFound("session/user");
+                }
+
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                session.Data = DateTime.Now;
+
+                await sessionContext.SaveChangesAsync();
+
+                var data = new { login = user.Login, email = AES.Decrypt(user.E_mail,hash), twoFa = user.TwoFA , twoFAtype = user.Type_of_2FA };
+
+                return StatusCode(200, data);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+
 
         [HttpGet("check")]
         public async Task<ActionResult<User>> Check()
         {
             return Ok();
         }
-
-        //OTP API z typem
-
     }
 }

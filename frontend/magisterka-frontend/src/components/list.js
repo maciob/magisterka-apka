@@ -42,7 +42,7 @@ function MyList() {
             <tr key={entry.iD_website}>
               <td className="td">
                 <button onClick={() => handleImgClick(entry)}>
-                  <img src={'/icons/' + entry.icon} alt="icon" width="40" height="40"/>
+                  <img src={'/icons/' + entry.icon } onError={(e)=>{e.target.onError = null; e.target.src = '/icons/question-mark.png'}} alt="icon" width="40" height="40"/>
                 </button>
               </td>
               <td>

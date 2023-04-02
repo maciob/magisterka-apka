@@ -32,7 +32,7 @@ function LowerBar() {
           sessionStorage.setItem('sessionID','');
           sessionStorage.setItem('sessionExpired', true);
           setTimeLeft(300);
-          navigate('/login');
+          navigate('/');
         } catch (error) {
           console.error(error);
         }
@@ -43,8 +43,7 @@ function LowerBar() {
   
   async function Logout(data) {
     try {
-        return await fetch('/api/User/logout?sessionID=' + data.sessionID, {
-            method: 'POST' }).then(data => data.json())
+        return await fetch('/api/User/logout?sessionID=' + data.sessionID, { method: 'POST' }).then(data => data.json())
     }
     catch (error)
     {
@@ -54,7 +53,7 @@ function LowerBar() {
   
   return (
     <div className="lower-bar">
-      <p>Time left: {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10 ? '0' : ''}{timeLeft % 60}</p>
+      <p>Time left in session: {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10 ? '0' : ''}{timeLeft % 60}</p>
     </div>
   );
 }

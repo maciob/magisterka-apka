@@ -21,7 +21,7 @@ namespace WebApplication1.Models
             }
         }
 
-        public static string Encrypt(string PlainText, string Password, string Salt, string HashAlgorithm = "SHA1", int PasswordIterations = 2, string InitialVector = "0000000000000000", int KeySize = 256)
+        public static string Encrypt(string PlainText, string Password, string Salt = "PasswordManager", string HashAlgorithm = "SHA1", int PasswordIterations = 2, string InitialVector = "0000000000000000", int KeySize = 256)
         {
             if (string.IsNullOrEmpty(PlainText))
                 return "";
@@ -50,7 +50,7 @@ namespace WebApplication1.Models
             SymmetricKey.Clear();
             return Convert.ToBase64String(CipherTextBytes);
         }
-        public static string Decrypt(string CipherText, string Password, string Salt, string HashAlgorithm = "SHA1", int PasswordIterations = 2, string InitialVector = "0000000000000000", int KeySize = 256)
+        public static string Decrypt(string CipherText, string Password, string Salt = "PasswordManager", string HashAlgorithm = "SHA1", int PasswordIterations = 2, string InitialVector = "0000000000000000", int KeySize = 256)
         {
             if (string.IsNullOrEmpty(CipherText))
                 return "";
@@ -79,7 +79,7 @@ namespace WebApplication1.Models
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return "Wrong Password";
             }

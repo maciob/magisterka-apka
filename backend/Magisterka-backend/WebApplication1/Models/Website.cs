@@ -13,24 +13,27 @@ namespace WebApplication1.Models
         public System.Guid ID_user { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(50)")]
+        [Column(TypeName = "nvarchar(128)")]
         public string website_name { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(50)")]
+        [Column(TypeName = "nvarchar(128)")]
         public string website_adress { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(50)")]
+        [Column(TypeName = "nvarchar(128)")]
         public string Login { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(50)")]
+        [Column(TypeName = "nvarchar(128)")]
         public string Password { get; set; }
 
         [Required]
         [Column(TypeName = "DATETIME")]
         public DateTime Data { get; set; }
+
+        [Column(TypeName = "nvarchar(128)")]
+        public string Icon { get; set; }
 
     }
 }

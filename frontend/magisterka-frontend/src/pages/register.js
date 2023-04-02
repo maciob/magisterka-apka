@@ -17,11 +17,10 @@ function RegisterPage() {
   const [googleAuthenticatorPrivateKey, setGoogleAuthenticatorPrivateKey] = useState("");
   const [code, setCode] = useState("");
   const [googleAuthenticatorURL, setGoogleAuthenticatorURL] = useState("");
-  const [status, setStatus] = useState("");
-
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [hash, setHash] = useState("");
+  const [error, setError] = useState(false);
   
+
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -29,49 +28,86 @@ function RegisterPage() {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
   };
+  
+
+  function validatePassword(password) {
+    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,30}$/;
+    return passwordRegex.test(password);
+  }
+  function validateLogin(str) {
+    return str.length >= 5 && str.length <= 20;
+  }
+  function validatetwoFAtype(str) {
+    return str === "Google Authenticator" || str === "Email";
+
+  }
+
 
   const handleEmailChange = (e) => {
     const input = e.target.value;
     setEmail(input);
-    setIsValidEmail(validateEmail(input));
+    setIsValidEmail(validateEmail(input))
   };
 
   async function registerUser(data) {
     try {
-      return await fetch('/api/User/register', {
+      const response =  await fetch('/api/User/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
-      }).then(data => data.json())
+      });
+      if (response.status === 200) {
+        const json = await response.json();
+        return { success: true, data: json };
+      } else if (response.status === 400){
+        return { success: false, error: 'Such a user already exists.' };
+      } else if (response.status === 500){
+        return { success: false, error: 'Server error.' };
+      } else {
+        return { success: false, error: 'Something went wrong.' };
+      }
     }
     catch (error)
     {
       console.error(error);
-      setError('An error occurred while trying to register');
+      return { success: false, error: error };
     }
   }
 
   const handleRegisterClick = async (e) => {
-    e.preventDefault();
-      const value = await registerUser({
-        username,
-        password,
-        email,
-        twoFA,
-        twoFAtype
-      });
-      if(value.twoFA === true)
-      {
-        setGoogleAuthenticator(true);
-        setSessionID(value.sessionID)
-        setGoogleAuthenticatorPrivateKey(value.privateKey)
-        setGoogleAuthenticatorURL(value.url)
-      }
-      else
-      {
-        navigate('/login');
+      e.preventDefault();
+      if(!validateLogin(username)){
+        setError("Username needs to have between 5 and 20 characters.");
+      } else if(!validatePassword(password)){
+        setError("Password needs to have between 8 and 30 characters and at least 1 special character, 1 number, 1 lower and 1 upper character.");
+      } else if(!validateEmail(email)){
+        setError("Invalid email.");
+      } else if(!validatetwoFAtype(twoFAtype)){
+        setError("Choose two factor authentication method.");
+      } else {
+        setError("");
+        const { success, data, error } = await registerUser({
+          username,
+          password,
+          email,
+          twoFA,
+          twoFAtype
+        });
+        if(success) {
+          if(data.twoFA === true && data.type === "Google Authenticator") {
+            setGoogleAuthenticator(true);
+            setSessionID(data.sessionID);
+            setGoogleAuthenticatorPrivateKey(data.privateKey);
+            setGoogleAuthenticatorURL(data.url);
+            setHash(data.hash);
+          } else {
+            navigate('/login');
+          }  
+        } else {
+          setError(error);
+        }
       }
     };
 
@@ -87,22 +123,27 @@ function RegisterPage() {
         if (response.status === 200) {
           const json = await response.json();
           return { success: true, data: json };
-        } else {
+        } else if (response.status === 404){
+          return { success: false, error: 'Your session is invalid.' };
+        } else if (response.status === 400){
           return { success: false, error: 'Invalid code.' };
+        } else if (response.status === 500){
+          return { success: false, error: 'Server error.' };
+        } else {
+          return { success: false, error: 'Something went wrong.' };
         }
       } catch (error) {
         console.error(error);
-        return { success: false, error: 'Error submitting code.' };
+        return { success: false, error: error };
       }
     };
   
-
-    
     const submit2FACode = async () => {
       const { success, data, error } = await submitCode({
         sessionID,
         twoFAtype,
-        code
+        code,
+        hash
       });
       if (success) {
         navigate('/login');
@@ -110,6 +151,7 @@ function RegisterPage() {
         setError(error);
       }
     };
+    
   return (
     <div>
       <Navbar />
@@ -141,12 +183,13 @@ function RegisterPage() {
         </div>
       ) : (
         <div className="form">
-          <form onSubmit={handleRegisterClick}>
+          <form autoComplete="off" onSubmit={handleRegisterClick} >
               <div className="form__input-group">
                   <label htmlFor="username" className="form__label">Username</label>
                   <input
                       type="text"
-                      id="username"
+                      // id="username"
+                      autoComplete="new-password"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       className="form__input"
@@ -156,8 +199,9 @@ function RegisterPage() {
                   <label htmlFor="password" className="form__label">Password</label>
                   <input
                       type="password"
-                      id="password"
+                      // id="password"
                       value={password}
+                      autoComplete="new-password"
                       onChange={(e) => setPassword(e.target.value)}
                       className="form__input"
                   />
@@ -178,7 +222,7 @@ function RegisterPage() {
               <div/>            
               <div className="form__input-group">
                   <label htmlFor="twoFA" className="form__label">2FA</label>
-                  <div className="form__toggle">
+                  <div>
                       <label>
                           <Switch 
                               onChange={(checked) => setTwoFA(checked)} 
@@ -204,6 +248,7 @@ function RegisterPage() {
               </div>
               )}
               {error && <div className="form__error">{error}</div>}
+              <br/>
               <button type="submit" className="form__button">Register</button>
           </form>
         </div>

@@ -1,18 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using MySqlConnector;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Models;
+using WebApplication1.Controllers;
+using System;
+
 namespace WebApplication1
 {
     public class Startup
@@ -24,27 +19,32 @@ namespace WebApplication1
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsApi",
-                    builder => builder.WithOrigins("http://localhost:3000")
+                    builder => builder.WithOrigins(Configuration.GetValue<string>("ConnectionStrings:FrontURL").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyApp_FrontURL")))
                         .AllowAnyHeader()
                         .AllowAnyMethod());
             });
 
 
-            services.AddDbContext<UserContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
-            services.AddDbContext<SessionContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
-            services.AddDbContext<WebsiteContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
-            services.AddDbContext<UserSessionContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MyAppDatabase")));
+            services.AddDbContext<UserContext>(options =>
+                options.UseSqlServer(Configuration.GetValue<string>("ConnectionStrings:MyAppDatabase").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyAppDatabase_ConnectionString"))));
+            services.AddDbContext<SessionContext>(options =>
+                options.UseSqlServer(Configuration.GetValue<string>("ConnectionStrings:MyAppDatabase").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyAppDatabase_ConnectionString"))));
+            services.AddDbContext<WebsiteContext>(options =>
+                options.UseSqlServer(Configuration.GetValue<string>("ConnectionStrings:MyAppDatabase").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyAppDatabase_ConnectionString"))));
+            services.AddDbContext<UserSessionContext>(options =>
+                options.UseSqlServer(Configuration.GetValue<string>("ConnectionStrings:MyAppDatabase").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyAppDatabase_ConnectionString"))));
+
+            services.AddScoped<TimerService>();
+            services.AddHostedService<TimerService>();
 
             services.AddControllers();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

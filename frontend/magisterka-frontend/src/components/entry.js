@@ -10,25 +10,27 @@ function Entry() {
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [url, setURL] = useState("");
-    const [icon, setIcon] = useState("github");
+    const [icon, setIcon] = useState("");
     const [data, setData] = useState("");
     const [sessionID, setSessionID] = useState(sessionStorage.getItem('sessionID'));
     const [hash, setHash] = useState(sessionStorage.getItem('hash'));
     const [websiteID, setWebsiteID] = useState(sessionStorage.getItem('EntryValue'));
-
+    
     useEffect(() => {
         const fetchData = async () => {
             const data = await fetch('/api/Website/entry?sessionID='+sessionStorage.getItem('sessionID')+'&websiteID='+sessionStorage.getItem('EntryValue')+'&hash='+sessionStorage.getItem('hash'))
             const json = await data.json();
-            setYourName(json.website_name)
-            setLogin(json.login)
-            setPassword(json.password)
-            setURL(json.website_adress)
-            setData(json.data)
+            setYourName(json.website_name);
+            setLogin(json.login);
+            setPassword(json.password);
+            setURL(json.website_adress);
+            setData(json.data);
+            setIcon(json.icon);
         }
         fetchData().catch(console.error);
-      }, [])
-      
+    }, [])
+
+        
     const handleSaveClick = async (e) => {
         e.preventDefault();
         const value = await EntryData({
@@ -108,7 +110,7 @@ function Entry() {
                             <label id="c4" className="entry__form__label">{yourname}</label>
                         )}
                         <div className="entry__rightside__div">
-                            <img src={'/icons/' + icon + ".png"} alt="icon" width="60" height="60"/>
+                            <img src={'/icons/' + icon } onError={(e)=>{e.target.onError = null; e.target.src = '/icons/question-mark.png'}} alt="icon" width="60" height="60"/>
                         </div>
                     </div>
                 </div>

@@ -1,11 +1,11 @@
 ﻿namespace WebApplication1.Models
 {
-    public class OTPModel
+    public class OTPChangeModel
     {
         public string sessionID { get; set; }
+        public bool twoFA { get; set; }
         public string twoFAtype { get; set; }
-        public string code { get; set; }
-        public string hash { get; set; }
+        public string confirmedPassword { get; set; }
 
     }
 }
