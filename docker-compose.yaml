@@ -10,9 +10,7 @@ services:
       MyAppDatabase_ConnectionString: "server=database;user=myuser;password=MyP@ssw0rd;database=menadzer;"
       MyApp_Login: "" # your own gmail login
       MyApp_Password: "" # your own gmail password
-      MyApp_FrontURL: "http://frontend:80"
-    networks:
-     - app
+      MyApp_FrontURL: "http://localhost:80"
     depends_on:
       - database
     networks:

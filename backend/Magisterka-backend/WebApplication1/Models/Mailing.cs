@@ -45,7 +45,7 @@ namespace WebApplication1.Models
             message.Subject = "PasswordManager account activation";
             message.Body = new TextPart("plain")
             {
-                Text = @"Link to activate your account: " + address + "/activate?sessionID=" + sessionID
+                Text = @"Link to activate your account: https://" + address + "/activate?sessionID=" + sessionID
             };
 
             using (var client = new SmtpClient())

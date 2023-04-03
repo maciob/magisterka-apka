@@ -12,6 +12,7 @@ import "../css/home.css";
 function Home() {
   const [sessionExpired, setSessionExpired] = useState(sessionStorage.getItem('sessionExpired') === 'true');
 
+  
   return (
     <div>
       {sessionExpired ? (
