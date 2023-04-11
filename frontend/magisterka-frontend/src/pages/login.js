@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../components/upperbar';
 import '../css/login.css'
+import PasswordInput from '../components/passwordinput';
 import {useNavigate} from 'react-router-dom';
 
 function LoginPage() {
@@ -117,7 +118,11 @@ function LoginPage() {
       setError(error);
     }
   };
-  
+
+  const handlePasswordChange = (password) => {
+    setPassword(password);
+  }
+
   return (
     <div>
       <Navbar />
@@ -132,7 +137,7 @@ function LoginPage() {
                   id="code"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className="form__input"
+                  className="form-control"
                 />
               </div>
               {error && <div className="form__error">{error}</div>}
@@ -147,7 +152,7 @@ function LoginPage() {
                   id="code"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className="form__input"
+                  className="form-control"
                 />
               </div>
             {error && <div className="form__error">{error}</div>}
@@ -165,18 +170,19 @@ function LoginPage() {
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="form__input"
+                className="form-control"
               />
             </div>
             <div className="form__input-group">
               <label htmlFor="password" className="form__label">Password</label>
-              <input
+              {/* <input
                 type="password"
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="form__input"
-              />
+              /> */}
+            <PasswordInput onPasswordChange={handlePasswordChange} />
             </div>
             {error && <div className="form__error">{error}</div>}
             <br/>

@@ -1,5 +1,7 @@
 import React, { useState , useEffect } from 'react';
 import '../css/entry.css'
+import '../css/login.css'
+import PasswordInput from '../components/passwordinput';
 
 function NewEntry() {
     const [show, setShow] = useState(true)
@@ -60,7 +62,9 @@ function NewEntry() {
     const handleShowClick = async () => {
         setShow(prevCheck => !prevCheck)
     }
-
+    const handlePassword = (password) => {
+        setPassword(password);
+      }
   return (
       <div className="entry__form">
             <form autoComplete="off" onSubmit={handleConfirmClick}>
@@ -70,7 +74,7 @@ function NewEntry() {
                             type="text"
                             value={yourname}
                             onChange={(e) => setYourName(e.target.value)}
-                            className="entry__form__input"
+                            className="form-control"
                         />
                 </div>
                 <div className='entry__form__input-group'>
@@ -80,7 +84,7 @@ function NewEntry() {
                             value={login}
                             // autoComplete="off"
                             onChange={(e) => setLogin(e.target.value)}
-                            className="entry__form__input"
+                            className="form-control"
                         />
                     <div className='entry__form__rightside'>
                     
@@ -89,7 +93,7 @@ function NewEntry() {
 
                 <div className='entry__form__input-group'>
                     <label id="c1" className="entry__form__label">Password</label>
-                        <div id="c4" className='entry__form__input-group__child'>
+                        {/* <div id="c4" className='entry__form__input-group__child'>
                             { show ? (
                                 <input
                                     type="password"
@@ -110,7 +114,8 @@ function NewEntry() {
                             <div className='entry__rightside__div'>
                                 <button type="button" onClick={handleShowClick} className='entry__button'>Show</button>
                             </div>
-                        </div>
+                        </div> */}
+                    <PasswordInput onPasswordChange={handlePassword} />
                 </div>
 
                 <div className='entry__form__input-group'>
@@ -119,7 +124,7 @@ function NewEntry() {
                             type="text"
                             value={url}
                             onChange={(e) => setURL(e.target.value)}
-                            className="entry__form__input"
+                            className="form-control"
                         />
                     <div className='entry__form__rightside'>
                             

@@ -42,7 +42,7 @@ function GeneratorSettings() {
                     id="length"
                     value={length}
                     onChange={(e) => setLength(e.target.value)}
-                    className="entry__form__input"
+                    className="form-control"
                 />
             </div>
             <div className="form__input-group">

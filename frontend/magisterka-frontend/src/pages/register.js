@@ -3,6 +3,7 @@ import Navbar from '../components/upperbar';
 import '../css/login.css'
 import Switch from "react-switch";
 import LowerBar from '../components/lowerbar';
+import PasswordInput from '../components/passwordinput';
 import {useNavigate} from 'react-router-dom';
 
 function RegisterPage() {
@@ -84,7 +85,7 @@ function RegisterPage() {
         setError("Password needs to have between 8 and 30 characters and at least 1 special character, 1 number, 1 lower and 1 upper character.");
       } else if(!validateEmail(email)){
         setError("Invalid email.");
-      } else if(!validatetwoFAtype(twoFAtype)){
+      } else if(twoFA === true && !validatetwoFAtype(twoFAtype)){
         setError("Choose two factor authentication method.");
       } else {
         setError("");
@@ -152,6 +153,11 @@ function RegisterPage() {
       }
     };
     
+    const handlePasswordChange = (password) => {
+      setPassword(password);
+    }
+  
+
   return (
     <div>
       <Navbar />
@@ -175,7 +181,7 @@ function RegisterPage() {
               id="code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="form__input"
+              className="form-control"
             />
           </div>
           {error && <div className="form__error">{error}</div>}
@@ -192,19 +198,20 @@ function RegisterPage() {
                       autoComplete="new-password"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="form__input"
+                      className="form-control"
                   />
               </div>
               <div className="form__input-group">
                   <label htmlFor="password" className="form__label">Password</label>
-                  <input
+                  {/* <input
                       type="password"
                       // id="password"
                       value={password}
                       autoComplete="new-password"
                       onChange={(e) => setPassword(e.target.value)}
                       className="form__input"
-                  />
+                  /> */}
+                  <PasswordInput onPasswordChange={handlePasswordChange} />
               </div>
               <div className="form__input-group">
                   <label htmlFor="email" className="form__label">Email</label>
@@ -213,7 +220,7 @@ function RegisterPage() {
                           id="email"
                           value={email}
                           onChange={handleEmailChange}
-                          className="form__input"
+                          className="form-control"
                       />
                   </div>
                   {!isValidEmail && (
@@ -238,7 +245,7 @@ function RegisterPage() {
                       id="twoFAtype"
                       value={twoFAtype}
                       onChange={(e) => setTwoFAtype(e.target.value)}
-                      className="form__input"
+                      className="form-control"
                       input="Select two-factor authentication type"
                   >
                   <option value="" selected disabled hidden>Select two-factor authentication type</option>

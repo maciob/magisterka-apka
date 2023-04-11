@@ -2,6 +2,8 @@ import React, { useState , useEffect } from 'react';
 import '../css/account.css'
 import Switch from "react-switch";
 import {useNavigate} from 'react-router-dom';
+import PasswordInput from '../components/passwordinput';
+import '../css/login.css'
 
 function Account() {
   const [username, setUsername] = useState('');
@@ -257,6 +259,16 @@ function Account() {
     }
   };
 
+  const handleConfirmPassword = (password) => {
+    setConfirmedPassword(password);
+  }
+  const handleOldPassword = (password) => {
+    setOldPassword(password);
+  }
+  const handleNewPassword = (password) => {
+    setNewPassword(password);
+  }
+
   return (
     <div>
         <div className="account_form">
@@ -279,13 +291,14 @@ function Account() {
                 </div>
                 <div className="account_form__input-group">
                     <label id="a1" htmlFor="newPassword" className="account_form__label">Confirm password</label>
-                    <input
+                    <PasswordInput onPasswordChange={handleConfirmPassword} />
+                    {/* <input
                       type="password"
                       id="confirmedPassword"
                       value={confirmedPassword}
                       onChange={(e) => setConfirmedPassword(e.target.value)}
                       className="account_form__input"
-                    />
+                    /> */}
                 </div>
                 {passwordError && <div className="form__error">{passwordError}</div>}
                 <div className="account_form__input-group">
@@ -323,23 +336,25 @@ function Account() {
                 <div>
                   <div className="account_form__input-group">
                     <label id="a1" htmlFor="oldPassword" className="account_form__label">Old password</label>
-                    <input
+                    <PasswordInput onPasswordChange={handleOldPassword} />
+                    {/* <input
                       type="password"
                       id="oldPassword"
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
                       className="account_form__input"
-                    />
+                    /> */}
                   </div>
                   <div className="account_form__input-group">
                     <label id="a1" htmlFor="newPassword" className="account_form__label">New password</label>
-                    <input
+                    {/* <input
                       type="password"
                       id="newPassword"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="account_form__input"
-                    />
+                    /> */}
+                    <PasswordInput onPasswordChange={handleNewPassword} />
                   </div>
                   {passwordError && <div className="form__error">{passwordError}</div>}
                   <div className="account_form__input-group">
@@ -388,7 +403,7 @@ function Account() {
                     id="code"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    className="form__input"
+                    className="form-control"
                   />
                 </div>
                 {twoFACodeError && <div className="form__error">{twoFACodeError}</div>}
@@ -453,13 +468,14 @@ function Account() {
                     </div>
                     <div className="account_form__input-group">
                       <label id="a1" htmlFor="newPassword" className="account_form__label">Confirm password</label>
-                      <input
+                      <PasswordInput onPasswordChange={handleConfirmPassword} />
+                      {/* <input
                         type="password"
                         id="confirmedPassword"
                         value={confirmedPassword}
                         onChange={(e) => setConfirmedPassword(e.target.value)}
                         className="account_form__input"
-                      />
+                      /> */}
                     </div>
                     
                     {twoFAError && <div className="form__error">{twoFAError}</div>}

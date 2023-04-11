@@ -21,9 +21,9 @@ function Home() {
           <SessionExpired />
         </div>
       ) : (
-        <div display="flex">
+        <div>
           <Navbar />
-          <div className="footer">
+          <div>
             <LowerBar />
           </div>
           <div className="container">

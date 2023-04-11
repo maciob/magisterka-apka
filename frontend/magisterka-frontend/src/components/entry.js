@@ -1,6 +1,8 @@
 import React, { useState , useEffect } from 'react';
 import '../css/entry.css'
+import '../css/login.css'
 import '../css/account.css'
+import PasswordInput from '../components/passwordinput';
 
 function Entry() {
     const [show, setShow] = useState(false)
@@ -92,7 +94,9 @@ function Entry() {
             console.error(error);
         }
     }
-
+    const handlePassword = (password) => {
+        setPassword(password);
+      }
   return (
       <div className="entry__form">
             <form onSubmit={handleSaveClick}>
@@ -104,7 +108,7 @@ function Entry() {
                                 type="text"
                                 value={yourname}
                                 onChange={(e) => setYourName(e.target.value)}
-                                className="entry__form__input"
+                                className="form-control"
                             />
                         ):(
                             <label id="c4" className="entry__form__label">{yourname}</label>
@@ -122,7 +126,7 @@ function Entry() {
                             type="text"
                             value={login}
                             onChange={(e) => setLogin(e.target.value)}
-                            className="entry__form__input"
+                            className="form-control"
                         />
                     ):(
                         <label className="entry__form__label">{login}</label>
@@ -136,7 +140,8 @@ function Entry() {
                     <label id="c1" className="entry__form__label">Password</label>
                     { edit ? (
                         <div id="c4" className='entry__form__input-group__child'>
-                        { show ? (
+                        
+                        {/* { show ? (
                             <input
                                 type="text"
                                 value={password}
@@ -150,10 +155,11 @@ function Entry() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="entry__form__input"
                             />
-                        )}
-                            <div className='entry__rightside__div'>
+                        )} */}
+                            <PasswordInput onPasswordChange={handlePassword} />
+                            {/* <div className='entry__rightside__div'>
                                 <button type="button" onClick={handleShowClick} className='entry__button'>Show</button>
-                            </div>
+                            </div> */}
 
                         </div>
 
@@ -179,7 +185,7 @@ function Entry() {
                             type="text"
                             value={url}
                             onChange={(e) => setURL(e.target.value)}
-                            className="entry__form__input"
+                            className="form-control"
                         />
                     ):(
                         <label href={url} className="entry__form__label">{url}</label>
