@@ -28,37 +28,37 @@
   }
   
 
-  .table-container {
+  .list-table-container {
     height: calc(100vh - 150px); /* Set a fixed height for the container */
     overflow: auto; /* Add overflow: auto; to make the container scrollable */
     min-width: 350px;
   }
   
-  .table {
+  .list-table {
     border-collapse: collapse;
     width: 100%;
   }
   
-  .td {
+  .list-td {
     border: 0px solid #ddd;
     padding: 0px;
   }
   
-  .td:first-child {
+  .list-td:first-child {
     width: 10px;
     text-align: center;
   }
   
-  .td:first-child img {
+  .list-td:first-child img {
     display: block;
     margin: 0 auto;
   }
   
-  .td:last-child {
+  .list-td:last-child {
     text-align: left;
   }
   
-  .button {
+  .list-button {
     background-color: #fff;
     border: none;
     color: #333;
@@ -70,11 +70,11 @@
     font-size: 18px;
   }
   
-  .button:hover {
+  .list-button:hover {
     background-color: #333;
     color: #fff;
   }
   
-  .button:focus {
+  .list-button:focus {
     outline: none;
   }

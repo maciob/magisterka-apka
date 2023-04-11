@@ -26,14 +26,14 @@ function Home() {
           <div>
             <LowerBar />
           </div>
-          <div className="container">
-            <div className="menu">
+          <div className="home-container">
+            <div className="home-menu">
               <Menu />
             </div>
-            <div className="list">
+            <div className="home-list">
               <MyList />
             </div>
-            <div className="details">
+            <div className="home-details">
               { JSON.parse(sessionStorage.getItem('Entry')) && (
                 <Entry />
               )}

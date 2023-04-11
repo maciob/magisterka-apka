@@ -35,18 +35,18 @@ function MyList() {
   };
 
   return (
-    <div className="table-container">
-      <table className="table">
+    <div className="list-table-container">
+      <table className="list-table">
         <tbody>
           {items.map((entry) => (
             <tr key={entry.iD_website}>
-              <td className="td">
+              <td className="list-td">
                 <button onClick={() => handleImgClick(entry)}>
                   <img src={'/icons/' + entry.icon } onError={(e)=>{e.target.onError = null; e.target.src = '/icons/question-mark.png'}} alt="icon" width="40" height="40"/>
                 </button>
               </td>
               <td>
-                <button className="button" onClick={() => handleClick(entry.iD_website)}>
+                <button className="list-button" onClick={() => handleClick(entry.iD_website)}>
                   {entry.website_name}
                 </button>
               </td>
