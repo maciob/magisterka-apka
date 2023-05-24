@@ -32,6 +32,14 @@ namespace WebApplication1.Models
         [Column(TypeName = "DATETIME")]
         public DateTime Data { get; set; }
 
+        [Required]
+        [Column(TypeName = "varbinary(64)")]
+        public byte[] Salt { get; set; }
+
+        [Required]
+        [Column(TypeName = "varbinary(16)")]
+        public byte[] IV { get; set; }
+
         [Column(TypeName = "nvarchar(128)")]
         public string Icon { get; set; }
 

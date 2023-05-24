@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.Models;
+using System.Text;
 
 namespace WebApplication1.Controllers
 {
@@ -67,15 +68,21 @@ namespace WebApplication1.Controllers
                     }
                 }
 
+                var IV = Cryptography.GenerateRandomIV();
+                var Salt = Cryptography.GenerateRandomSalt();
+                var hash = Cryptography.GetHash(model.password);
+
                 var user = new User
                 {
                     ID_user = Guid.NewGuid(),
                     Login = model.username,
-                    Password = AES.Encrypt(model.password,AES.Hash(model.password)),
+                    Password = Cryptography.Encrypt(model.password, hash, Salt, IV),
                     TwoFA = model.twoFA,
                     Type_of_2FA = model.twoFAtype,
-                    E_mail = AES.Encrypt(model.email, AES.Hash(model.password)),
-                    TwoFA_code = AES.Encrypt(code, AES.Hash(model.password)),
+                    E_mail = Cryptography.Encrypt(model.email, hash, Salt, IV),
+                    TwoFA_code = Cryptography.Encrypt(code, hash, Salt, IV),
+                    Salt = Salt,
+                    IV = IV,
                     Activated = false
                 };
 
@@ -99,7 +106,7 @@ namespace WebApplication1.Controllers
                     type = model.twoFAtype,
                     url = url,
                     privateKey = privateKey,
-                    hash = AES.Hash(model.password)
+                    hash = hash
                 };
 
                 await mail.SendActivate(model.email, session.Session_ID.ToString());
@@ -144,7 +151,7 @@ namespace WebApplication1.Controllers
                 if (model.twoFAtype == "Google Authenticator")
                 {
                     byte[] b = new byte[10];
-                    string[] subs = AES.Decrypt(user.TwoFA_code, model.hash).Split(' ');
+                    string[] subs = Cryptography.Decrypt(user.TwoFA_code, model.hash, user.Salt, user.IV).Split(' ');
                     int i = 0;
 
                     foreach (var sub in subs)
@@ -169,7 +176,7 @@ namespace WebApplication1.Controllers
                 }
                 else
                 {
-                    if (AES.Decrypt(user.TwoFA_code, model.hash) == model.code)
+                    if (Cryptography.Decrypt(user.TwoFA_code, model.hash, user.Salt, user.IV) == model.code)
                     {
                         session.Active = true;
                         session.Data = DateTime.Now;
@@ -206,16 +213,19 @@ namespace WebApplication1.Controllers
                 {
                     return NotFound("session/user");
                 }
-
-                var encryptedPassword = AES.Encrypt(model.confirmedPassword, AES.Hash(model.confirmedPassword));
-                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user && u.Password == encryptedPassword);
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user);
                 if (user == null)
+                {
+                    return NotFound();
+                }
+
+                var hash = Cryptography.GetHash(model.confirmedPassword);
+                if (Cryptography.Decrypt(user.Password, hash, user.Salt,user.IV) == "Wrong Password")
                 {
                     return Unauthorized("Wrong password.");
                 }
 
                 session.Data = DateTime.Now;
-
                 await sessionContext.SaveChangesAsync();
 
                 if ((model.twoFA == false && user.TwoFA == false) || (model.twoFA == true && user.TwoFA == true && model.twoFAtype == user.Type_of_2FA))
@@ -237,7 +247,7 @@ namespace WebApplication1.Controllers
                         }
                         user.TwoFA = model.twoFA;
                         user.Type_of_2FA = model.twoFAtype;
-                        user.TwoFA_code = AES.Encrypt(code, AES.Hash(model.confirmedPassword));
+                        user.TwoFA_code = Cryptography.Encrypt(code, hash, user.Salt, user.IV);
 
                         var response = new
                         {
@@ -341,12 +351,16 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var encryptedPassword = AES.Encrypt(model.password, AES.Hash(model.password));
-                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.Login == model.username && u.Password == encryptedPassword);
-
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.Login == model.username);
                 if (user == null)
                 {
                     return NotFound();
+                }
+
+                var hash = Cryptography.GetHash(model.password);
+                if (Cryptography.Decrypt(user.Password, hash, user.Salt, user.IV) != model.password)
+                {
+                    return NotFound("Wrong password.");
                 }
                 if (user.Activated == false) 
                 {
@@ -368,9 +382,9 @@ namespace WebApplication1.Controllers
                 if (user.Type_of_2FA == "Email") 
                 {
                     var generatedCode = PasswordGenerator.GeneratePassword(6, false, false, true, false);
-                    user.TwoFA_code = AES.Encrypt(generatedCode, AES.Hash(model.password));
+                    user.TwoFA_code = Cryptography.Encrypt(generatedCode, hash, user.Salt, user.IV);
 
-                    await mail.SendOTP(AES.Decrypt(user.E_mail, AES.Hash(model.password)), generatedCode);
+                    await mail.SendOTP(Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV), generatedCode);
                     await userContext.SaveChangesAsync();
                 }
                 var usersession = new UserSession
@@ -387,12 +401,12 @@ namespace WebApplication1.Controllers
 
                 if (user.TwoFA == true)
                 {
-                    var data = new { sessionID = session.Session_ID, hash = AES.Hash(model.password), otp = true, type = user.Type_of_2FA };
+                    var data = new { sessionID = session.Session_ID, hash = hash, otp = true, type = user.Type_of_2FA };
                     return StatusCode(200, data);
                 }
                 else 
                 {
-                    var data = new { sessionID = session.Session_ID, hash = AES.Hash(model.password), otp = false };
+                    var data = new { sessionID = session.Session_ID, hash = hash, otp = false };
                     return StatusCode(200, data);
                 }
             }
@@ -424,11 +438,16 @@ namespace WebApplication1.Controllers
                     return NotFound("session/user");
                 }
 
-                var encryptedPassword = AES.Encrypt(model.confirmedPassword, AES.Hash(model.confirmedPassword));
-                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user && u.Password == encryptedPassword);
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user);
                 if (user == null)
                 {
-                    return NotFound("Empty");
+                    return NotFound("User not found.");
+                }
+
+                var hash = Cryptography.GetHash(model.confirmedPassword);
+                if (Cryptography.Decrypt(user.Password, hash, user.Salt, user.IV) == "Wrong Password")
+                {
+                    return Unauthorized("Wrong password.");
                 }
 
                 var websites = await websiteContext.Website.Where(w => w.ID_user == user.ID_user).ToListAsync();
@@ -499,7 +518,6 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var encryptedPassword = AES.Encrypt(model.oldPassword, AES.Hash(model.oldPassword));
 
                 var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
                 if (session == null)
@@ -518,15 +536,23 @@ namespace WebApplication1.Controllers
                     return NotFound("session/user");
                 }
 
-                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user && u.Password == encryptedPassword);
+
+                var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user);
                 if (user == null)
                 {
-                    return NotFound();
+                    return NotFound("User not found.");
                 }
 
-                user.Password = AES.Encrypt(model.newPassword, AES.Hash(model.newPassword));
-                user.E_mail = AES.Encrypt(AES.Decrypt(user.E_mail, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
-                user.TwoFA_code = AES.Encrypt(AES.Decrypt(user.TwoFA_code, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
+                var hash = Cryptography.GetHash(model.oldPassword);
+                if (Cryptography.Decrypt(user.Password, hash, user.Salt, user.IV) == "Wrong Password")
+                {
+                    return Unauthorized("Wrong password.");
+                }
+
+                var newHash = Cryptography.GetHash(model.newPassword);
+                user.Password = Cryptography.Encrypt(model.newPassword, newHash, user.Salt, user.IV);
+                user.E_mail = Cryptography.Encrypt(Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV), newHash, user.Salt, user.IV);
+                user.TwoFA_code = Cryptography.Encrypt(Cryptography.Decrypt(user.TwoFA_code, hash, user.Salt, user.IV), newHash, user.Salt, user.IV);
 
                 var websites = await websiteContext.Website.Where(w => w.ID_user == userSession.ID_user).ToListAsync();
                 if (websites == null)
@@ -536,8 +562,8 @@ namespace WebApplication1.Controllers
 
                 foreach (var website in websites)
                 {
-                    website.Login = AES.Encrypt(AES.Decrypt(website.Login, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
-                    website.Password = AES.Encrypt(AES.Decrypt(website.Password, AES.Hash(model.oldPassword)), AES.Hash(model.newPassword));
+                    website.Login = Cryptography.Encrypt(Cryptography.Decrypt(website.Login, hash, website.Salt, website.IV), newHash, website.Salt, website.IV);
+                    website.Password = Cryptography.Encrypt(Cryptography.Decrypt(website.Password, hash, website.Salt, website.IV), newHash, website.Salt, website.IV);
                 }
 
                 session.Data = DateTime.Now;
@@ -546,7 +572,7 @@ namespace WebApplication1.Controllers
                 await userContext.SaveChangesAsync();
                 await websiteContext.SaveChangesAsync();
 
-                var data = new { hash = AES.Hash(model.newPassword) };
+                var data = new { hash = newHash };
 
                 return StatusCode(200, data);
             }
@@ -588,7 +614,7 @@ namespace WebApplication1.Controllers
 
                 await sessionContext.SaveChangesAsync();
 
-                var data = new { login = user.Login, email = AES.Decrypt(user.E_mail,hash), twoFa = user.TwoFA , twoFAtype = user.Type_of_2FA };
+                var data = new { login = user.Login, email = Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV), twoFa = user.TwoFA , twoFAtype = user.Type_of_2FA };
 
                 return StatusCode(200, data);
             }

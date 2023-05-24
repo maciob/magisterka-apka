@@ -5,9 +5,28 @@ using System;
 
 namespace WebApplication1.Models
 {
-    public class AES
+    public class Cryptography
     {
-        public static string Hash(string PlainText) 
+        public static byte[] GenerateRandomSalt(int saltSize = 32)
+        {
+            byte[] saltBytes = new byte[saltSize];
+            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+            {
+                rng.GetBytes(saltBytes);
+            }
+            return saltBytes;
+        }
+
+        public static byte[] GenerateRandomIV()
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.GenerateIV();
+                return aes.IV;
+            }
+        }
+
+        public static string GetHash(string PlainText)
         {
             using (SHA256 sha256Hash = SHA256.Create())
             {
@@ -20,14 +39,12 @@ namespace WebApplication1.Models
                 return builder.ToString();
             }
         }
-
-        public static string Encrypt(string PlainText, string Password, string Salt = "PasswordManager", string HashAlgorithm = "SHA1", int PasswordIterations = 2, string InitialVector = "0000000000000000", int KeySize = 256)
+        public static string Encrypt(string PlainText, string Password, byte[] SaltValueBytes, byte[] InitialVectorBytes, string HashAlgorithm = "SHA256", int PasswordIterations = 2, int KeySize = 256)
         {
             if (string.IsNullOrEmpty(PlainText))
                 return "";
-            byte[] InitialVectorBytes = Encoding.ASCII.GetBytes(InitialVector);
-            byte[] SaltValueBytes = Encoding.ASCII.GetBytes(Salt);
             byte[] PlainTextBytes = Encoding.UTF8.GetBytes(PlainText);
+
             PasswordDeriveBytes DerivedPassword = new PasswordDeriveBytes(Password, SaltValueBytes, HashAlgorithm, PasswordIterations);
             byte[] KeyBytes = DerivedPassword.GetBytes(KeySize / 8);
             RijndaelManaged SymmetricKey = new RijndaelManaged();
@@ -50,12 +67,10 @@ namespace WebApplication1.Models
             SymmetricKey.Clear();
             return Convert.ToBase64String(CipherTextBytes);
         }
-        public static string Decrypt(string CipherText, string Password, string Salt = "PasswordManager", string HashAlgorithm = "SHA1", int PasswordIterations = 2, string InitialVector = "0000000000000000", int KeySize = 256)
+        public static string Decrypt(string CipherText, string Password, byte[] SaltValueBytes, byte[] InitialVectorBytes, string HashAlgorithm = "SHA256", int PasswordIterations = 2, int KeySize = 256)
         {
             if (string.IsNullOrEmpty(CipherText))
                 return "";
-            byte[] InitialVectorBytes = Encoding.ASCII.GetBytes(InitialVector);
-            byte[] SaltValueBytes = Encoding.ASCII.GetBytes(Salt);
             byte[] CipherTextBytes = Convert.FromBase64String(CipherText);
             PasswordDeriveBytes DerivedPassword = new PasswordDeriveBytes(Password, SaltValueBytes, HashAlgorithm, PasswordIterations);
             byte[] KeyBytes = DerivedPassword.GetBytes(KeySize / 8);
@@ -88,4 +103,3 @@ namespace WebApplication1.Models
         }
     }
 }
-

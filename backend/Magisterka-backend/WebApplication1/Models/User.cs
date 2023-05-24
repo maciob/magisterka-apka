@@ -32,6 +32,14 @@ namespace WebApplication1.Models
         public string? TwoFA_code { get; set; }
 
         [Required]
+        [Column(TypeName = "varbinary(64)")]
+        public byte[] Salt { get; set; }
+
+        [Required]
+        [Column(TypeName = "varbinary(16)")]
+        public byte[] IV { get; set; }
+
+        [Required]
         [Column(TypeName = "bit")]
         public bool Activated { get; set; }
 

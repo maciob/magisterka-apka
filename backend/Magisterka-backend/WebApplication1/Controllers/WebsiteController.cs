@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.Models;
 using System.Text.Json;
-
+using System.Text;
 
 namespace WebApplication1.Controllers
 {
@@ -67,6 +67,8 @@ namespace WebApplication1.Controllers
                     website.ID_user = new Guid(sessionID);
                     website.Login = "";
                     website.Password = "";
+                    website.Salt = null;
+                    website.IV = null;
                 }
 
                 session.Data = DateTime.Now;
@@ -112,9 +114,10 @@ namespace WebApplication1.Controllers
                     return NotFound("Empty");
                 }
 
-                website.Login = AES.Decrypt(website.Login, hash);
-                website.Password = AES.Decrypt(website.Password, hash);
-
+                website.Login = Cryptography.Decrypt(website.Login, hash, website.Salt, website.IV);
+                website.Password = Cryptography.Decrypt(website.Password, hash, website.Salt, website.IV);
+                website.Salt = null;
+                website.IV = null;
                 session.Data = DateTime.Now;
 
                 await sessionContext.SaveChangesAsync();
@@ -151,15 +154,19 @@ namespace WebApplication1.Controllers
                     return NotFound("session/user");
                 }
 
+                var IV = Cryptography.GenerateRandomIV();
+                var Salt = Cryptography.GenerateRandomSalt();
 
                 var website = new Website
                 {
                     ID_user = userSession.ID_user,
-                    Login = AES.Encrypt(model.login,model.hash),
-                    Password = AES.Encrypt(model.password, model.hash),
+                    Login = Cryptography.Encrypt(model.login, model.hash, Salt, IV),
+                    Password = Cryptography.Encrypt(model.password, model.hash, Salt, IV),
                     website_name = model.yourname,
                     website_adress = URL.GetFullUrl(model.url),
                     Data = DateTime.Now,
+                    Salt = Salt,
+                    IV = IV,
                     Icon = URL.CharStrip(model.url)
                 };
 
@@ -208,8 +215,8 @@ namespace WebApplication1.Controllers
                     return NotFound("Empty");
                 }
 
-                website.Login = AES.Encrypt(model.login, model.hash);
-                website.Password = AES.Encrypt(model.password, model.hash);
+                website.Login = Cryptography.Encrypt(model.login, model.hash, website.Salt, website.IV);
+                website.Password = Cryptography.Encrypt(model.password, model.hash, website.Salt, website.IV);
                 website.website_name = model.yourname;
                 website.website_adress = URL.GetFullUrl(model.url);
                 website.Data = DateTime.Now;
