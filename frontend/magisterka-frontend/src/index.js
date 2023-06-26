@@ -8,6 +8,7 @@ import Home from './pages/home';
 import Activate from './pages/activate';
 import Main from './pages/main';
 import NotFoundPage from './pages/notfound';
+
 ReactDOM.render(
   <React.StrictMode>
     <Router>

@@ -18,8 +18,9 @@ GO
 CREATE TABLE User_data
 (
     ID_user UNIQUEIDENTIFIER PRIMARY KEY,
+    Fido BIT NOT NULL,
     Login VARCHAR(128) NOT NULL,
-    Password VARCHAR(128) NOT NULL,
+    Password VARCHAR(128),
     TwoFA BIT NOT NULL,
     Type_of_2FA VARCHAR(128),
     E_mail VARCHAR(128) NOT NULL,

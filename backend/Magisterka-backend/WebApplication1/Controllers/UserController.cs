@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.Models;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace WebApplication1.Controllers
 {
@@ -23,14 +24,25 @@ namespace WebApplication1.Controllers
         private readonly GoogleTOTP tp;
         private readonly Mailing mail;
 
-        public UserController(UserContext context,SessionContext context2,UserSessionContext context3,WebsiteContext context4)
+        private readonly ISecretsManagerService _secretsManagerService;
+
+        private IConfiguration MyConfig;
+        private bool mode;
+
+        public UserController(UserContext context,SessionContext context2,UserSessionContext context3,WebsiteContext context4, ISecretsManagerService secretsManagerService)
         {
             userContext = context;
             sessionContext = context2;
             userSessionContext = context3;
             websiteContext = context4;
+
             tp = new GoogleTOTP();
             mail = new Mailing();
+
+            _secretsManagerService = secretsManagerService;
+
+            MyConfig = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+            mode = bool.Parse(MyConfig.GetValue<string>("Mode").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyApp_Mode")));
         }
 
         [HttpPost("register")]
@@ -43,7 +55,7 @@ namespace WebApplication1.Controllers
                 {
                     return BadRequest("Such a user already exists.");
                 }
-
+                
                 string url = "";
                 string privateKey = "";
                 string code = "";
@@ -52,15 +64,12 @@ namespace WebApplication1.Controllers
                 {
                     if (model.twoFAtype == "Google Authenticator")
                     {
-                        string randomString = Transcoder.Base32Encode(tp.randomBytes);
-                        string ProvisionUrl = tp.UrlEncode(String.Format("otpauth://totp/{0} ({1})?secret={2}", "PasswordManager", model.username , randomString));
-                        url = String.Format("https://chart.apis.google.com/chart?cht=qr&chs={0}x{1}&chl={2}", 200, 200, ProvisionUrl);
+
+                        var randomString = Transcoder.Base32Encode(tp.randomBytes);
+                        var provisionUrl = tp.UrlEncode($"otpauth://totp/PasswordManager ({model.username})?secret={randomString}");
+                        url = $"https://chart.apis.google.com/chart?cht=qr&chs=200x200&chl={provisionUrl}";
                         privateKey = tp.getPrivateKey(tp.randomBytes);
-                        code = "";
-                        foreach (byte b in tp.randomBytes)
-                        {
-                            code = code + b + " ";
-                        }
+                        code = string.Join(" ", tp.randomBytes);
                     }
                     else if (model.twoFAtype == "Email")
                     {
@@ -76,7 +85,7 @@ namespace WebApplication1.Controllers
                 {
                     ID_user = Guid.NewGuid(),
                     Login = model.username,
-                    Password = Cryptography.Encrypt(model.password, hash, Salt, IV),
+                    Fido = false,
                     TwoFA = model.twoFA,
                     Type_of_2FA = model.twoFAtype,
                     E_mail = Cryptography.Encrypt(model.email, hash, Salt, IV),
@@ -85,6 +94,14 @@ namespace WebApplication1.Controllers
                     IV = IV,
                     Activated = false
                 };
+                if (mode)
+                {
+                    await _secretsManagerService.CreateSecret("user/" + user.ID_user, Cryptography.Encrypt(model.password, hash, Salt, IV));
+                }
+                else
+                {
+                    user.Password = Cryptography.Encrypt(model.password, hash, Salt, IV);
+                }
 
                 var session = new Session
                 {
@@ -131,36 +148,39 @@ namespace WebApplication1.Controllers
         {
             try 
             {
-                var session = await sessionContext.Session.FindAsync(new Guid(model.sessionID));
+           
+                var session = await sessionContext.Session.FindAsync(Guid.Parse(model.sessionID));
                 if (session == null)
                 {
                     return NotFound("Your session is invalid.");
                 }
-
+                
                 var userSession = await userSessionContext.User_session.FirstOrDefaultAsync(us => us.Session_ID == new Guid(model.sessionID));
                 if (userSession == null)
                 {
                     return NotFound("session/user");
                 }
-
                 var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user);
                 if (user == null)
                 {
                     return NotFound("user");
                 }
+
+                if (Cryptography.Decrypt(user.E_mail, model.hash, user.Salt, user.IV) == "Wrong Password")
+                {
+                    return Unauthorized("Wrong password.");
+                }
+
                 if (model.twoFAtype == "Google Authenticator")
                 {
                     byte[] b = new byte[10];
                     string[] subs = Cryptography.Decrypt(user.TwoFA_code, model.hash, user.Salt, user.IV).Split(' ');
-                    int i = 0;
-
+                    var i = 0;
                     foreach (var sub in subs)
                     {
-                        if (i == 10) break;
                         b[i] = Convert.ToByte(Convert.ToInt32(sub));
                         i++;
                     }
-
                     if (tp.generateResponseCode(tp.getCurrentInterval(), b) == model.code)
                     {
                         session.Active = true;
@@ -220,7 +240,8 @@ namespace WebApplication1.Controllers
                 }
 
                 var hash = Cryptography.GetHash(model.confirmedPassword);
-                if (Cryptography.Decrypt(user.Password, hash, user.Salt,user.IV) == "Wrong Password")
+
+                if (Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV) == "Wrong Password")
                 {
                     return Unauthorized("Wrong password.");
                 }
@@ -236,15 +257,12 @@ namespace WebApplication1.Controllers
                 {
                     if (model.twoFAtype == "Google Authenticator")
                     {
-                        string randomString = Transcoder.Base32Encode(tp.randomBytes);
-                        string ProvisionUrl = tp.UrlEncode(String.Format("otpauth://totp/{0} ({1})?secret={2}", "PasswordManager", user.Login, randomString));
-                        var url = String.Format("https://chart.apis.google.com/chart?cht=qr&chs={0}x{1}&chl={2}", 200, 200, ProvisionUrl);
+                        var randomString = Transcoder.Base32Encode(tp.randomBytes);
+                        var provisionUrl = tp.UrlEncode($"otpauth://totp/PasswordManager ({user.Login})?secret={randomString}");
+                        var url = $"https://chart.apis.google.com/chart?cht=qr&chs=200x200&chl={provisionUrl}";
                         var privateKey = tp.getPrivateKey(tp.randomBytes);
-                        var code = "";
-                        foreach (byte b in tp.randomBytes)
-                        {
-                            code = code + b + " ";
-                        }
+                        var code = string.Join(" ", tp.randomBytes);
+
                         user.TwoFA = model.twoFA;
                         user.Type_of_2FA = model.twoFAtype;
                         user.TwoFA_code = Cryptography.Encrypt(code, hash, user.Salt, user.IV);
@@ -291,7 +309,7 @@ namespace WebApplication1.Controllers
                             type = "",
                         };
 
-                        return Ok();
+                        return Ok(response);
                     }
                 }
             }
@@ -356,12 +374,17 @@ namespace WebApplication1.Controllers
                 {
                     return NotFound();
                 }
-
+                if (user.Fido == true) 
+                {
+                    return StatusCode(403,"Wrong authentication method.");
+                }
                 var hash = Cryptography.GetHash(model.password);
-                if (Cryptography.Decrypt(user.Password, hash, user.Salt, user.IV) != model.password)
+
+                if (Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV) == "Wrong Password")
                 {
                     return NotFound("Wrong password.");
                 }
+
                 if (user.Activated == false) 
                 {
                     return StatusCode(401,"Account not activated.");
@@ -376,9 +399,12 @@ namespace WebApplication1.Controllers
                 if (user.TwoFA == true)
                 {
                     session.Active = false;
-                } else {
+                } 
+                else 
+                {
                     session.Active = true;
                 }
+
                 if (user.Type_of_2FA == "Email") 
                 {
                     var generatedCode = PasswordGenerator.GeneratePassword(6, false, false, true, false);
@@ -445,7 +471,8 @@ namespace WebApplication1.Controllers
                 }
 
                 var hash = Cryptography.GetHash(model.confirmedPassword);
-                if (Cryptography.Decrypt(user.Password, hash, user.Salt, user.IV) == "Wrong Password")
+
+                if (Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV) == "Wrong Password")
                 {
                     return Unauthorized("Wrong password.");
                 }
@@ -455,6 +482,10 @@ namespace WebApplication1.Controllers
                 {
                     foreach (var website in websites) 
                     {
+                        if (mode)
+                        {
+                            await _secretsManagerService.DeleteSecret("website/" + website.ID_website);
+                        }
                         websiteContext.Website.Remove(website);
                     }
                 }
@@ -469,6 +500,12 @@ namespace WebApplication1.Controllers
                         sessionContext.Session.Remove(session_entry);
                     }
                 }
+
+                if (mode)
+                {
+                    await _secretsManagerService.DeleteSecret("user/" + user.ID_user);
+                }
+
                 userContext.User_data.Remove(user);
 
                 await websiteContext.SaveChangesAsync();
@@ -514,7 +551,7 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPut("password")]
-        public async Task<ActionResult<User>> ChangePassword ([FromBody] ChangePasswordModel model)
+        public async Task<ActionResult<User>> ChangePassword([FromBody] ChangePasswordModel model)
         {
             try
             {
@@ -536,21 +573,36 @@ namespace WebApplication1.Controllers
                     return NotFound("session/user");
                 }
 
-
                 var user = await userContext.User_data.FirstOrDefaultAsync(u => u.ID_user == userSession.ID_user);
                 if (user == null)
                 {
                     return NotFound("User not found.");
                 }
 
+                if (user.Fido == true) 
+                {
+                    return Unauthorized("Wrong account type");
+                }
+
                 var hash = Cryptography.GetHash(model.oldPassword);
-                if (Cryptography.Decrypt(user.Password, hash, user.Salt, user.IV) == "Wrong Password")
+
+                if (Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV) == "Wrong Password")
                 {
                     return Unauthorized("Wrong password.");
                 }
 
                 var newHash = Cryptography.GetHash(model.newPassword);
-                user.Password = Cryptography.Encrypt(model.newPassword, newHash, user.Salt, user.IV);
+                string updatedEncryptedUserPassword = Cryptography.Encrypt(model.newPassword, newHash, user.Salt, user.IV);
+                
+                if (mode)
+                {
+                    await _secretsManagerService.UpdateSecret("user/" + user.ID_user, updatedEncryptedUserPassword);
+                }
+                else
+                {
+                    user.Password = updatedEncryptedUserPassword;
+                }
+
                 user.E_mail = Cryptography.Encrypt(Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV), newHash, user.Salt, user.IV);
                 user.TwoFA_code = Cryptography.Encrypt(Cryptography.Decrypt(user.TwoFA_code, hash, user.Salt, user.IV), newHash, user.Salt, user.IV);
 
@@ -563,7 +615,16 @@ namespace WebApplication1.Controllers
                 foreach (var website in websites)
                 {
                     website.Login = Cryptography.Encrypt(Cryptography.Decrypt(website.Login, hash, website.Salt, website.IV), newHash, website.Salt, website.IV);
-                    website.Password = Cryptography.Encrypt(Cryptography.Decrypt(website.Password, hash, website.Salt, website.IV), newHash, website.Salt, website.IV);
+                    if (mode)
+                    {
+                        var oldWebsitePassowrd = await _secretsManagerService.GetSecret("website/" + website.ID_website);
+                        var updatedWebsitePassword = Cryptography.Encrypt(Cryptography.Decrypt(oldWebsitePassowrd, hash, website.Salt, website.IV), newHash, website.Salt, website.IV);
+                        await _secretsManagerService.UpdateSecret("website/" + website.ID_website, updatedWebsitePassword);
+                    }
+                    else 
+                    {
+                        website.Password = Cryptography.Encrypt(Cryptography.Decrypt(website.Password, hash, website.Salt, website.IV), newHash, website.Salt, website.IV);
+                    }
                 }
 
                 session.Data = DateTime.Now;
@@ -610,11 +671,16 @@ namespace WebApplication1.Controllers
                     return NotFound();
                 }
 
+                if (Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV) == "Wrong Password")
+                {
+                    return Unauthorized("Wrong password.");
+                }
+
                 session.Data = DateTime.Now;
 
                 await sessionContext.SaveChangesAsync();
 
-                var data = new { login = user.Login, email = Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV), twoFa = user.TwoFA , twoFAtype = user.Type_of_2FA };
+                var data = new { login = user.Login, email = Cryptography.Decrypt(user.E_mail, hash, user.Salt, user.IV), twoFa = user.TwoFA , twoFAtype = user.Type_of_2FA , type = user.Fido };
 
                 return StatusCode(200, data);
             }

@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using WebApplication1.Models;
 using WebApplication1.Controllers;
 using System;
-
 namespace WebApplication1
 {
     public class Startup
@@ -29,7 +28,6 @@ namespace WebApplication1
                         .AllowAnyMethod());
             });
 
-
             services.AddDbContext<UserContext>(options =>
                 options.UseSqlServer(Configuration.GetValue<string>("ConnectionStrings:MyAppDatabase").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyAppDatabase_ConnectionString"))));
             services.AddDbContext<SessionContext>(options =>
@@ -38,9 +36,12 @@ namespace WebApplication1
                 options.UseSqlServer(Configuration.GetValue<string>("ConnectionStrings:MyAppDatabase").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyAppDatabase_ConnectionString"))));
             services.AddDbContext<UserSessionContext>(options =>
                 options.UseSqlServer(Configuration.GetValue<string>("ConnectionStrings:MyAppDatabase").Replace("[CONNECTION_STRING_PLACEHOLDER]", Environment.GetEnvironmentVariable("MyAppDatabase_ConnectionString"))));
+            
+            services.AddTransient<ISecretsManagerService, SecretsManagerService>();
 
             services.AddScoped<TimerService>();
             services.AddHostedService<TimerService>();
+            services.AddHttpClient();
 
             services.AddControllers();
         }

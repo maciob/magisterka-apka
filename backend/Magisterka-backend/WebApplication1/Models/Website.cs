@@ -7,8 +7,8 @@ namespace WebApplication1.Models
     public class Website
     {
         [Key]
-        public long ID_website { get; set; }
-
+        public System.Guid ID_website { get; set; }
+        
         [ForeignKey("User")]
         public System.Guid ID_user { get; set; }
 

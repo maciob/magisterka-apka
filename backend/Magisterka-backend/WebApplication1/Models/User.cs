@@ -10,10 +10,14 @@ namespace WebApplication1.Models
         public System.Guid ID_user { get; set; }
 
         [Required]
+        [Column(TypeName = "bit")]
+        public bool Fido { get; set; }
+
+
+        [Required]
         [Column(TypeName = "nvarchar(128)")]
         public string Login { get; set; }
 
-        [Required]
         [Column(TypeName = "nvarchar(128)")]
         public string Password { get; set; }
 

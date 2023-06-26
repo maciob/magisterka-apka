@@ -39,7 +39,7 @@ namespace WebApplication1.Models
                 return builder.ToString();
             }
         }
-        public static string Encrypt(string PlainText, string Password, byte[] SaltValueBytes, byte[] InitialVectorBytes, string HashAlgorithm = "SHA256", int PasswordIterations = 2, int KeySize = 256)
+        public static string Encrypt(string PlainText, string Password, byte[] SaltValueBytes, byte[] InitialVectorBytes, string HashAlgorithm = "SHA256", int PasswordIterations = 500, int KeySize = 256)
         {
             if (string.IsNullOrEmpty(PlainText))
                 return "";
@@ -49,6 +49,7 @@ namespace WebApplication1.Models
             byte[] KeyBytes = DerivedPassword.GetBytes(KeySize / 8);
             RijndaelManaged SymmetricKey = new RijndaelManaged();
             SymmetricKey.Mode = CipherMode.CBC;
+            SymmetricKey.Padding = PaddingMode.PKCS7;
             byte[] CipherTextBytes = null;
             using (ICryptoTransform Encryptor = SymmetricKey.CreateEncryptor(KeyBytes, InitialVectorBytes))
             {
@@ -67,7 +68,7 @@ namespace WebApplication1.Models
             SymmetricKey.Clear();
             return Convert.ToBase64String(CipherTextBytes);
         }
-        public static string Decrypt(string CipherText, string Password, byte[] SaltValueBytes, byte[] InitialVectorBytes, string HashAlgorithm = "SHA256", int PasswordIterations = 2, int KeySize = 256)
+        public static string Decrypt(string CipherText, string Password, byte[] SaltValueBytes, byte[] InitialVectorBytes, string HashAlgorithm = "SHA256", int PasswordIterations = 500, int KeySize = 256)
         {
             if (string.IsNullOrEmpty(CipherText))
                 return "";
@@ -76,8 +77,9 @@ namespace WebApplication1.Models
             byte[] KeyBytes = DerivedPassword.GetBytes(KeySize / 8);
             RijndaelManaged SymmetricKey = new RijndaelManaged();
             SymmetricKey.Mode = CipherMode.CBC;
-            byte[] PlainTextBytes = new byte[CipherTextBytes.Length];
-            int ByteCount = 0;
+            SymmetricKey.Padding = PaddingMode.PKCS7; 
+            byte[] buffer = new byte[1024];
+            StringBuilder sb = new StringBuilder();
             try
             {
                 using (ICryptoTransform Decryptor = SymmetricKey.CreateDecryptor(KeyBytes, InitialVectorBytes))
@@ -86,11 +88,16 @@ namespace WebApplication1.Models
                     {
                         using (CryptoStream CryptoStream = new CryptoStream(MemStream, Decryptor, CryptoStreamMode.Read))
                         {
-
-                            ByteCount = CryptoStream.Read(PlainTextBytes, 0, PlainTextBytes.Length);
-                            MemStream.Close();
+                            int bytesRead = 0;
+                            do
+                            {
+                                bytesRead = CryptoStream.Read(buffer, 0, buffer.Length);
+                                sb.Append(Encoding.UTF8.GetString(buffer, 0, bytesRead));
+                            }
+                            while (bytesRead > 0);
                             CryptoStream.Close();
                         }
+                        MemStream.Close();
                     }
                 }
             }
@@ -99,7 +106,7 @@ namespace WebApplication1.Models
                 return "Wrong Password";
             }
             SymmetricKey.Clear();
-            return Encoding.UTF8.GetString(PlainTextBytes, 0, ByteCount);
+            return sb.ToString();
         }
     }
 }

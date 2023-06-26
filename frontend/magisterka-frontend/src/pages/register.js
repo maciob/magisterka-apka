@@ -5,6 +5,7 @@ import Switch from "react-switch";
 import LowerBar from '../components/lowerbar';
 import PasswordInput from '../components/passwordinput';
 import {useNavigate} from 'react-router-dom';
+import { Client } from '@passwordlessdev/passwordless-client';
 
 function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -20,7 +21,8 @@ function RegisterPage() {
   const [googleAuthenticatorURL, setGoogleAuthenticatorURL] = useState("");
   const [hash, setHash] = useState("");
   const [error, setError] = useState(false);
-  
+  const [fido, setFido] = useState(false);
+
 
   const navigate = useNavigate();
 
@@ -29,8 +31,6 @@ function RegisterPage() {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
   };
-  
-
   function validatePassword(password) {
     const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,30}$/;
     return passwordRegex.test(password);
@@ -40,16 +40,12 @@ function RegisterPage() {
   }
   function validatetwoFAtype(str) {
     return str === "Google Authenticator" || str === "Email";
-
   }
-
-
   const handleEmailChange = (e) => {
     const input = e.target.value;
     setEmail(input);
     setIsValidEmail(validateEmail(input))
   };
-
   async function registerUser(data) {
     try {
       const response =  await fetch('/api/User/register', {
@@ -77,37 +73,104 @@ function RegisterPage() {
     }
   }
 
+  async function registerFido(data) {
+    try {
+      const response = await fetch(`/api/Fido/create-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      if (response.status === 200) {
+        const json = await response.json();
+        return { success: true, data: json };
+      } else if (response.status === 400) {
+        return { success: false, error: 'Such a user already exists.' };
+      } else if (response.status === 500) {
+        return { success: false, error: 'Server error.' };
+      } else {
+        return { success: false, error: 'Something went wrong.' };
+      }
+    } catch (error) {
+      console.error(error);
+      return { success: false, error: error };
+    }
+  };
+
+  const p = new Client({
+    apiKey: "passwordmanager:public:5884a4a251b542e7863d0afbc9011881"
+  })
+
   const handleRegisterClick = async (e) => {
       e.preventDefault();
-      if(!validateLogin(username)){
-        setError("Username needs to have between 5 and 20 characters.");
-      } else if(!validatePassword(password)){
-        setError("Password needs to have between 8 and 30 characters and at least 1 special character, 1 number, 1 lower and 1 upper character.");
-      } else if(!validateEmail(email)){
-        setError("Invalid email.");
-      } else if(twoFA === true && !validatetwoFAtype(twoFAtype)){
-        setError("Choose two factor authentication method.");
-      } else {
-        setError("");
-        const { success, data, error } = await registerUser({
-          username,
-          password,
-          email,
-          twoFA,
-          twoFAtype
-        });
-        if(success) {
-          if(data.twoFA === true && data.type === "Google Authenticator") {
-            setGoogleAuthenticator(true);
-            setSessionID(data.sessionID);
-            setGoogleAuthenticatorPrivateKey(data.privateKey);
-            setGoogleAuthenticatorURL(data.url);
-            setHash(data.hash);
-          } else {
-            navigate('/login');
-          }  
+      if(fido === true) {
+        if(!validateLogin(username)){
+          setError("Username needs to have between 5 and 20 characters.");
+        } else if(!validateEmail(email)){
+          setError("Invalid email.");
+        } else if(twoFA === true && !validatetwoFAtype(twoFAtype)){
+          setError("Choose two factor authentication method.");
         } else {
-          setError(error);
+          setError("");
+          const { success, data, error } = await registerFido({
+            username,
+            email,
+            twoFA,
+            twoFAtype
+          });
+          if (!success) {
+            setError(error)
+          }
+          else
+          {
+            const { token , errors } = await p.register(data.token['token']);
+            if(!errors) {
+              if(data.twoFA === true && data.type === "Google Authenticator") {
+                setGoogleAuthenticator(true);
+                setSessionID(data.sessionID);
+                setGoogleAuthenticatorPrivateKey(data.privateKey);
+                setGoogleAuthenticatorURL(data.url);
+                setHash(data.hash);
+              } else {
+                navigate('/login');
+              }  
+            } else {
+              setError(errors);
+            }
+          }
+        }
+      } else {
+        if(!validateLogin(username)){
+          setError("Username needs to have between 5 and 20 characters.");
+        } else if(!validatePassword(password)){
+          setError("Password needs to have between 8 and 30 characters and at least 1 special character, 1 number, 1 lower and 1 upper character.");
+        } else if(!validateEmail(email)){
+          setError("Invalid email.");
+        } else if(twoFA === true && !validatetwoFAtype(twoFAtype)){
+          setError("Choose two factor authentication method.");
+        } else {
+          setError("");
+          const { success, data, error } = await registerUser({
+            username,
+            password,
+            email,
+            twoFA,
+            twoFAtype
+          });
+          if(success) {
+            if(data.twoFA === true && data.type === "Google Authenticator") {
+              setGoogleAuthenticator(true);
+              setSessionID(data.sessionID);
+              setGoogleAuthenticatorPrivateKey(data.privateKey);
+              setGoogleAuthenticatorURL(data.url);
+              setHash(data.hash);
+            } else {
+              navigate('/login');
+            }  
+          } else {
+            setError(error);
+          }
         }
       }
     };
@@ -157,7 +220,6 @@ function RegisterPage() {
       setPassword(password);
     }
   
-
   return (
     <div>
       <Navbar />
@@ -191,6 +253,18 @@ function RegisterPage() {
         <div className="form">
           <form autoComplete="off" onSubmit={handleRegisterClick} >
               <div className="form__input-group">
+                  <label htmlFor="fido" className="form__label">Passwordless Fido2</label>
+                  <div>
+                      <label>
+                          <Switch 
+                              onChange={(checked) => setFido(checked)} 
+                              checked={fido}
+                              className="react-switch"
+                          />
+                      </label>
+                  </div>
+              </div>
+              <div className="form__input-group">
                   <label htmlFor="username" className="form__label">Username</label>
                   <input
                       type="text"
@@ -201,6 +275,7 @@ function RegisterPage() {
                       className="form-control"
                   />
               </div>
+              {!fido && (
               <div className="form__input-group">
                   <label htmlFor="password" className="form__label">Password</label>
                   {/* <input
@@ -213,6 +288,7 @@ function RegisterPage() {
                   /> */}
                   <PasswordInput onPasswordChange={handlePasswordChange} />
               </div>
+              )}
               <div className="form__input-group">
                   <label htmlFor="email" className="form__label">Email</label>
                       <input

@@ -3,6 +3,7 @@ import Navbar from '../components/upperbar';
 import '../css/login.css'
 import PasswordInput from '../components/passwordinput';
 import {useNavigate} from 'react-router-dom';
+import { Client } from '@passwordlessdev/passwordless-client';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
@@ -32,6 +33,8 @@ function LoginPage() {
         return { success: true, data: json };
       } else if (response.status === 401){
         return { success: false, error: 'Account not activated. Check your email.' };
+      } else if (response.status === 403){
+        return { success: false, error: 'Wrong authentication method.' };
       } else if (response.status === 404){
         return { success: false, error: 'Invalid login or password.' };
       } else if (response.status === 500){
@@ -123,6 +126,70 @@ function LoginPage() {
     setPassword(password);
   }
 
+
+  const p = new Client({
+    apiKey: "passwordmanager:public:5884a4a251b542e7863d0afbc9011881"
+  })
+
+  async function login(data) {
+    try {
+      const response = await fetch(`/api/Fido/verify-signin?token=${data}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+      });
+      if (response.status === 200) {
+        const json = await response.json();
+        return { success: true, data: json };
+      } else if (response.status === 401) {
+        return { success: false, errors: 'Account not activated.' };
+      } else if (response.status === 500) {
+        return { success: false, errors: 'Server error.' };
+      } else {
+        return { success: false, errors: 'Something went wrong.' };
+      }
+    } catch (error) {
+      console.error(error);
+      return { success: false, error: error };
+    }
+  };
+
+  const LoginWithFido = async (e) => {
+    e.preventDefault();
+
+    const { token, error } = await p.signinWithDiscoverable();
+  
+    if(error) {
+        console.error(error);
+        setError(error);
+    } else {
+      const { success, data, errors } = await login(token);
+      if (success) {
+        if(data.otp === true)
+        {
+          setTwoFA(true)
+          if(data.type === "Google Authenticator"){
+            setGoogleAuthenticator(true);
+          }
+          setSessionID(data.sessionID);
+          setTwoFAtype(data.type);
+          setHash(data.hash);
+          setError("");
+        }
+        else
+        {
+          sessionStorage.setItem('sessionID', data.sessionID);
+          sessionStorage.setItem('hash', data.hash);
+          sessionStorage.setItem('sessionExpired', false);
+          navigate('/home');
+        }
+      } else {
+        setError(errors);
+      }
+    }
+  }; 
+
   return (
     <div>
       <Navbar />
@@ -187,6 +254,7 @@ function LoginPage() {
             {error && <div className="form__error">{error}</div>}
             <br/>
             <button type="submit" className="form__button">Login</button>
+            <button type="button" className="form__button" onClick={LoginWithFido}>Login with Fido</button>
           </form>
         </div>
       )}

@@ -10,6 +10,7 @@ function Account() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [email, setEmail] = useState(null);
+  const [accountType, setAccountType] = useState(null);
   const [twoFA, setTwoFA] = useState();
   const [twoFAtype, setTwoFAtype] = useState("");
   const [passwordError, setPasswordError] = useState(false);
@@ -37,6 +38,7 @@ function Account() {
       setEmail(json.email)
       setOldTwoFA(json.twoFa)
       setOldTwoFAtype(json.twoFAtype)
+      setAccountType(json.type)
   }
   fetchData().catch(console.error);
 }, []);
@@ -327,6 +329,7 @@ function Account() {
               )}
             </form>
         </div>
+        { !accountType && (
         <div className="account_form">
             <div>
                 <h2>Master Password</h2>                    
@@ -379,6 +382,7 @@ function Account() {
                 )}
             </form>
         </div>
+        )}
         <div className="account_form">
             <div>
                 <h2>2nd factor authentication</h2>                    
