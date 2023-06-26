@@ -11,6 +11,8 @@ services:
       MyApp_Login: "" # your own gmail login
       MyApp_Password: "" # your own gmail password
       MyApp_FrontURL: "http://localhost:80"
+      MyApp_FIDO_API_SECRET: "" #get your own at passwordless.dev
+      MyApp_Mode: "False" #changing this to True will generate huge costs @ your AWS account
     depends_on:
       - database
     networks:
