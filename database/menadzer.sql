@@ -7,6 +7,15 @@ GO
 USE menadzer;
 GO
 
+CREATE LOGIN myuser WITH PASSWORD = 'MyP@ssw0rd';
+GO
+
+CREATE USER myuser FOR LOGIN myuser;
+GO
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON DATABASE::menadzer TO myuser;
+GO
+
 CREATE TABLE Session
 (
     Session_ID UNIQUEIDENTIFIER PRIMARY KEY, 
@@ -18,8 +27,8 @@ GO
 CREATE TABLE User_data
 (
     ID_user UNIQUEIDENTIFIER PRIMARY KEY,
-    Fido BIT NOT NULL,
     Login VARCHAR(128) NOT NULL,
+    Fido BIT NOT NULL,
     Password VARCHAR(128),
     TwoFA BIT NOT NULL,
     Type_of_2FA VARCHAR(128),
@@ -41,7 +50,7 @@ GO
 
 CREATE TABLE Website
 (
-    ID_website BIGINT PRIMARY KEY IDENTITY(1,1),
+    ID_website UNIQUEIDENTIFIER PRIMARY KEY,
     ID_user UNIQUEIDENTIFIER NOT NULL REFERENCES User_data(ID_user),
     website_name VARCHAR(128) NOT NULL,
     website_adress VARCHAR(128) NOT NULL,
